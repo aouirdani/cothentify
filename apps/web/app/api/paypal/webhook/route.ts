@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 function base() {
   return process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com';

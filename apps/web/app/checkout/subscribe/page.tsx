@@ -6,8 +6,8 @@ import { Card, CardHeader } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import toast from 'react-hot-toast';
+import NextDynamic from 'next/dynamic';
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default function SubscribePage() {
   return (
@@ -36,21 +36,7 @@ function SubscribeInner() {
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function payWithCard() {
-    if (!agree) { toast.error('Please accept terms'); return; }
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, billing, email }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.url) throw new Error(data?.error || 'Checkout failed');
-      window.location.href = data.url as string;
-    } catch (e: any) {
-      toast.error(e?.message || 'Checkout failed');
-    }
-  }
+  const StripeInline = NextDynamic(() => import('../../../components/checkout/StripeInline'), { ssr: false });
 
   function payWithPayPal() {
     if (!agree) { toast.error('Please accept terms'); return; }
@@ -103,9 +89,12 @@ function SubscribeInner() {
 
       <Card>
         <CardHeader title="Payment" subtitle={`Plan: ${plan.toUpperCase()} • Billing: ${billing.toUpperCase()} • Price: ${amount.toFixed(2)} ${currency}${billing === 'yearly' ? ' / yr' : ' / mo'}`} />
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={payWithCard}>Pay with card</Button>
-          <Button variant="secondary" onClick={payWithPayPal}>Pay with PayPal</Button>
+        <div className="grid gap-4">
+          <StripeInline plan={plan as any} billing={billing as any} payer={{ name, company, email }} agree={agree} />
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">or</span>
+            <Button variant="secondary" onClick={payWithPayPal}>Pay with PayPal</Button>
+          </div>
         </div>
       </Card>
     </div>

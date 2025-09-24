@@ -8,7 +8,6 @@ import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default function SuccessPage() {
   return (
