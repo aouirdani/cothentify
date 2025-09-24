@@ -23,7 +23,7 @@ export async function authRoutes(app: FastifyInstance) {
       },
     },
     handler: async (req, reply) => {
-      if (app.config?.NODE_ENV === 'production' || process.env.NODE_ENV === 'production') {
+      if (process.env['NODE_ENV'] === 'production') {
         return reply.code(404).send({ error: 'Not available in production' });
       }
       const Body = z.object({ email: z.string().email(), role: z.nativeEnum(Role) });
