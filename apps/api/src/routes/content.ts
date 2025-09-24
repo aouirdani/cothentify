@@ -58,7 +58,7 @@ export async function contentRoutes(app: FastifyInstance) {
       summary: 'Create a content piece',
       security: [{ bearerAuth: [] }],
     },
-    preHandler: [app.authenticate as any, (app.authorize as any)(['ADMIN', 'MEMBER'])],
+    preHandler: [app.authenticate as any, app.authorize as any],
     handler: async (req, reply) => {
       const Body = z.object({ title: z.string().min(1), body: z.string().min(1), language: z.string().default('en') });
       const parsed = Body.safeParse(req.body);
@@ -97,7 +97,7 @@ export async function contentRoutes(app: FastifyInstance) {
   // Update
   app.put('/:id', {
     schema: { summary: 'Update a content piece' },
-    preHandler: [app.authenticate as any, (app.authorize as any)(['ADMIN', 'MEMBER'])],
+    preHandler: [app.authenticate as any, app.authorize as any],
     handler: async (req, reply) => {
       const { id } = req.params as { id: string };
       const Body = z.object({ title: z.string().optional(), body: z.string().optional(), language: z.string().optional(), status: z.nativeEnum(ContentStatus).optional() });

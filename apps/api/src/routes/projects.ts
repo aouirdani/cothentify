@@ -39,7 +39,7 @@ export async function projectRoutes(app: FastifyInstance) {
       summary: 'Create a project',
       security: [{ bearerAuth: [] }],
     },
-    preHandler: [app.authenticate as any, (app.authorize as any)(['ADMIN', 'MEMBER'])],
+    preHandler: [app.authenticate as any, app.authorize as any],
     handler: async (req, reply) => {
       const Body = z.object({ name: z.string().min(1), description: z.string().optional() });
       const parsed = Body.safeParse(req.body);
@@ -63,7 +63,7 @@ export async function projectRoutes(app: FastifyInstance) {
   // Update project
   app.put('/:id', {
     schema: { summary: 'Update a project', security: [{ bearerAuth: [] }] },
-    preHandler: [app.authenticate as any, (app.authorize as any)(['ADMIN', 'MEMBER'])],
+    preHandler: [app.authenticate as any, app.authorize as any],
     handler: async (req, reply) => {
       const { id } = req.params as { id: string };
       const Body = z.object({ name: z.string().optional(), description: z.string().optional() });
@@ -78,4 +78,3 @@ export async function projectRoutes(app: FastifyInstance) {
     },
   });
 }
-
