@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import type { Route } from 'next';
+import { signOut, useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -29,12 +30,12 @@ export function Header() {
           const json = await res.json();
           setPlan(json?.plan || null);
         }
-      } catch {}
+      } catch { /* noop */ }
     }
     loadPlan();
   }, [status]);
 
-  const NavLink = ({ href, label }: { href: string; label: string }) => (
+  const NavLink = ({ href, label }: { href: Route; label: string }) => (
     <Link
       href={href}
       className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--bg-subtle)] ${pathname === href ? 'text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}

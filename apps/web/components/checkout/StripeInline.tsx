@@ -70,8 +70,9 @@ function StripeForm({ plan, billing, payer, agree }: Props) {
       } else {
         toast('Payment status: ' + result.paymentIntent?.status);
       }
-    } catch (e: any) {
-      toast.error(e?.message || 'Payment failed');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg || 'Payment failed');
     } finally {
       setLoading(false);
     }

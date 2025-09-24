@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import { Card, CardHeader } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
@@ -35,7 +36,7 @@ function LoginInner() {
       toast.error('Invalid credentials');
     } else {
       toast.success('Signed in');
-      router.push(callbackUrl);
+      router.push(callbackUrl as Route);
     }
   }
 

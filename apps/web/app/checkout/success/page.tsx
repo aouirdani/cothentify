@@ -37,7 +37,7 @@ function SuccessInner() {
           setActivated(true);
           toast.success('Subscription activated');
         }
-      } catch {}
+      } catch { /* noop */ }
     }
     activate();
   }, [plan, status, activated]);

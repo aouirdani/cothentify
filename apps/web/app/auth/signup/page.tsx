@@ -24,8 +24,9 @@ export default function SignupPage() {
       if (!res.ok) throw new Error('Registration failed');
       toast.success('Account created. Please sign in.');
       router.push('/auth/login');
-    } catch (e: any) {
-      toast.error(e?.message || 'Registration failed');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Registration failed';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -57,4 +58,3 @@ export default function SignupPage() {
     </div>
   );
 }
-

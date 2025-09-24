@@ -3,9 +3,10 @@ import { Card, CardHeader } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { SectionHeading } from '../../components/ui/section-heading';
 import BillingToggle from '../../components/pricing/BillingToggle';
-import { getPriceUSD, formatPrice } from '../../lib/payments';
+import { getPriceUSD } from '../../lib/payments';
+// toast available in other flows; not needed here
 
-type Billing = 'monthly' | 'yearly';
+// Billing type provided by URL param; no explicit alias needed
 
 type Plan = {
   id: string;
@@ -49,12 +50,17 @@ const plans: Plan[] = [
 ];
 
 export default function PricingPage({ searchParams }: { searchParams: { [k: string]: string | string[] | undefined } }) {
-  const billing = (Array.isArray(searchParams?.billing) ? searchParams?.billing[0] : searchParams?.billing) === 'yearly' ? 'yearly' : 'monthly';
+  const sp = searchParams as Record<string, string | string[] | undefined>;
+  const billingParam = Array.isArray(sp['billing']) ? sp['billing'][0] : sp['billing'];
+  const billing = billingParam === 'yearly' ? 'yearly' : 'monthly';
 
   const priceFor = (p: Plan) => {
     if (p.monthly === 0) return 0;
-    const map: any = { essential: 'essential', premium: 'premium', professional: 'professional' };
-    const price = getPriceUSD(map[p.id] as any, billing as any);
+    const map: Record<string, 'essential' | 'premium' | 'professional'> = {
+      essential: 'essential', premium: 'premium', professional: 'professional',
+    };
+    const planKey = map[p.id] || 'essential';
+    const price = getPriceUSD(planKey, billing);
     // Show effective monthly for yearly by dividing by 12
     const eff = billing === 'yearly' ? (price.amount / 12) : price.amount;
     return Number(eff.toFixed(2));
@@ -65,28 +71,7 @@ export default function PricingPage({ searchParams }: { searchParams: { [k: stri
     [billing],
   );
 
-  async function checkout(planId: string) {
-    if (planId === 'freemium') {
-      window.location.href = '/dashboard';
-      return;
-    }
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId, billing }),
-      });
-      const json = await res.json();
-      if (json?.url) {
-        window.location.href = json.url;
-      } else {
-        toast('Redirecting to dashboard...');
-        window.location.href = '/dashboard';
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Checkout failed');
-    }
-  }
+  // Checkout handled via links; no direct function needed
 
   return (
     <div className="py-4">
@@ -97,7 +82,7 @@ export default function PricingPage({ searchParams }: { searchParams: { [k: stri
 
       <div className="grid gap-6 md:grid-cols-4">
         {plans.map((p) => (
-          <Card key={p.id} className={`${p.popular ? 'ring-1 ring-brand/40' : ''}`}>
+          <Card key={p.id} className={`${p.popular ? 'ring-1 ring-[var(--accent)]/40' : ''}`}>
             <div className="flex items-start justify-between">
               <div>
                 <div className="text-sm font-medium text-slate-500">{p.name}</div>
@@ -112,9 +97,9 @@ export default function PricingPage({ searchParams }: { searchParams: { [k: stri
             </div>
             <p className="mt-3 text-sm text-slate-600">{p.description}</p>
             <ul className="mt-4 grid gap-2 text-sm text-slate-700">
-              {p.features.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand" />
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
                   <span>{f}</span>
                 </li>
               ))}
