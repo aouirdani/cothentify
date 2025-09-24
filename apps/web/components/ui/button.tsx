@@ -12,9 +12,9 @@ const sizes: Record<Size, string> = {
   lg: 'h-12 px-6 text-base',
 };
 const variants: Record<Variant, string> = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600',
-  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
-  ghost: 'bg-transparent hover:bg-slate-100 text-slate-800 focus-visible:ring-slate-400 dark:hover:bg-slate-800 dark:text-slate-100',
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600',
+  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-400',
+  ghost: 'bg-transparent hover:bg-slate-100 text-slate-800 focus-visible:ring-slate-400',
   danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
 };
 

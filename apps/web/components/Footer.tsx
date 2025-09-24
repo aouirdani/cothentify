@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="mt-12 border-t bg-white/60 py-8 text-sm text-slate-600">
       <div className="container flex flex-col items-center justify-between gap-3 md:flex-row">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-slate-800 dark:text-slate-100">Cothentify</span>
+          <span className="font-semibold text-slate-800">Cothentify</span>
           <span>© 2025</span>
         </div>
         <div className="flex items-center gap-4">
