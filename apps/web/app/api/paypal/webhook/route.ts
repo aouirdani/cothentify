@@ -4,12 +4,12 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 function base() {
-  return process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com';
+  return process.env['PAYPAL_BASE_URL'] || 'https://api-m.sandbox.paypal.com';
 }
 
 async function getAccessToken() {
-  const client = process.env.PAYPAL_CLIENT_ID || '';
-  const secret = process.env.PAYPAL_CLIENT_SECRET || '';
+  const client = process.env['PAYPAL_CLIENT_ID'] || '';
+  const secret = process.env['PAYPAL_CLIENT_SECRET'] || '';
   const res = await fetch(`${base()}/v1/oauth2/token`, {
     method: 'POST',
     headers: {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const certUrl = req.headers.get('paypal-cert-url') || '';
     const authAlgo = req.headers.get('paypal-auth-algo') || '';
     const transmissionSig = req.headers.get('paypal-transmission-sig') || '';
-    const webhookId = process.env.PAYPAL_WEBHOOK_ID || '';
+    const webhookId = process.env['PAYPAL_WEBHOOK_ID'] || '';
     const body = await req.text();
     const token = await getAccessToken();
 
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
     if (type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource || {};
       const orderId = resource?.supplementary_data?.related_ids?.order_id || resource?.id || 'unknown';
-      const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const token = process.env.WEBHOOK_API_TOKEN || '';
+      const api = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+      const token = process.env['WEBHOOK_API_TOKEN'] || '';
       await fetch(`${api}/api/v1/billing/status`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
         body: JSON.stringify({ provider: 'paypal', externalId: orderId, status: 'active', meta: resource }),
@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
     if (type === 'PAYMENT.CAPTURE.DENIED' || type === 'PAYMENT.CAPTURE.REFUNDED') {
       const resource = event.resource || {};
       const orderId = resource?.supplementary_data?.related_ids?.order_id || resource?.id || 'unknown';
-      const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const token = process.env.WEBHOOK_API_TOKEN || '';
+      const api = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+      const token = process.env['WEBHOOK_API_TOKEN'] || '';
       await fetch(`${api}/api/v1/billing/status`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
         body: JSON.stringify({ provider: 'paypal', externalId: orderId, status: 'canceled', meta: resource }),
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
     // Subscription events (if you switch to PayPal Subscriptions API)
     if (type === 'BILLING.SUBSCRIPTION.ACTIVATED' || type === 'BILLING.SUBSCRIPTION.UPDATED') {
       const subId = (event.resource?.id as string) || 'unknown';
-      const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const token = process.env.WEBHOOK_API_TOKEN || '';
+      const api = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+      const token = process.env['WEBHOOK_API_TOKEN'] || '';
       await fetch(`${api}/api/v1/billing/status`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
         body: JSON.stringify({ provider: 'paypal', externalId: subId, status: 'active', meta: event.resource }),
@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
     }
     if (type === 'BILLING.SUBSCRIPTION.CANCELLED' || type === 'BILLING.SUBSCRIPTION.SUSPENDED') {
       const subId = (event.resource?.id as string) || 'unknown';
-      const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const token = process.env.WEBHOOK_API_TOKEN || '';
+      const api = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+      const token = process.env['WEBHOOK_API_TOKEN'] || '';
       await fetch(`${api}/api/v1/billing/status`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
         body: JSON.stringify({ provider: 'paypal', externalId: subId, status: 'canceled', meta: event.resource }),

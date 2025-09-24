@@ -13,13 +13,27 @@ import { useEffect } from 'react';
 import useSWR from 'swr';
 import { Skeleton } from '../../components/ui/skeleton';
 
+type AnalysisDetails = {
+  pattern_matches?: string[];
+  linguistic_markers?: string[];
+  [k: string]: unknown;
+};
+
+type AnalysisResult = {
+  ai_probability: number;
+  confidence_score: number;
+  detected_models?: string[];
+  analysis_details?: AnalysisDetails;
+  [k: string]: unknown;
+};
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const hfEnabled = (process.env.NEXT_PUBLIC_ENABLE_HF_DETECTOR || 'false') === 'true';
+  const hfEnabled = (process.env["NEXT_PUBLIC_ENABLE_HF_DETECTOR"] || 'false') === 'true';
   const fetcher = (u: string) => fetch(u).then(r => r.json());
   const { data: me, isLoading: meLoading, mutate: mutateMe } = useSWR(status === 'authenticated' ? '/api/proxy/api/v1/me' : null, fetcher);
   const plan = me?.plan || null;
@@ -53,8 +67,8 @@ export default function DashboardPage() {
       const json = await res.json();
       setResult(json);
       toast.success('Analysis completed');
-    } catch (e: any) {
-      const msg = e?.message || 'Request failed';
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Request failed';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -188,8 +202,9 @@ function UsageCard() {
         const res2 = await fetch('/api/proxy/api/v1/me');
         const json2 = await res2.json();
         setPlan(json2?.plan || null);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load');
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Failed to load';
+        setError(msg);
       } finally {
         setLoading(false);
       }

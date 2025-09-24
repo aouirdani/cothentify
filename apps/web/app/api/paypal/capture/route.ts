@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 function paypalBase() {
-  const env = (process.env.PAYPAL_ENV || 'sandbox').toLowerCase();
+  const env = (process.env['PAYPAL_ENV'] || 'sandbox').toLowerCase();
   return env === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 }
 
 async function getAccessToken() {
-  const client = process.env.PAYPAL_CLIENT_ID || '';
-  const secret = process.env.PAYPAL_CLIENT_SECRET || '';
+  const client = process.env['PAYPAL_CLIENT_ID'] || '';
+  const secret = process.env['PAYPAL_CLIENT_SECRET'] || '';
   if (!client || !secret) throw new Error('PayPal credentials missing');
   const res = await fetch(`${paypalBase()}/v1/oauth2/token`, {
     method: 'POST',
@@ -38,4 +38,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
   }
 }
-

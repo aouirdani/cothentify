@@ -5,12 +5,12 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 
 const providers = [] as any[];
 
-if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
-  providers.push(GithubProvider({ clientId: process.env.GITHUB_ID, clientSecret: process.env.GITHUB_SECRET }));
+if (process.env['GITHUB_ID'] && process.env['GITHUB_SECRET']) {
+  providers.push(GithubProvider({ clientId: process.env['GITHUB_ID'] as string, clientSecret: process.env['GITHUB_SECRET'] as string }));
 }
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(GoogleProvider({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET }));
+if (process.env['GOOGLE_CLIENT_ID'] && process.env['GOOGLE_CLIENT_SECRET']) {
+  providers.push(GoogleProvider({ clientId: process.env['GOOGLE_CLIENT_ID'] as string, clientSecret: process.env['GOOGLE_CLIENT_SECRET'] as string }));
 }
 
 providers.push(
@@ -28,7 +28,7 @@ providers.push(
 export const authOptions: NextAuthOptions = {
   providers,
   session: { strategy: 'jwt' },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env['NEXTAUTH_SECRET'],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -42,4 +42,3 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
-

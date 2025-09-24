@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const priceEnvMap: Record<string, { monthly?: string; yearly?: string }> = {
-  essential: { monthly: process.env.STRIPE_PRICE_ESSENTIAL_MONTHLY, yearly: process.env.STRIPE_PRICE_ESSENTIAL_YEARLY },
-  premium: { monthly: process.env.STRIPE_PRICE_PREMIUM_MONTHLY, yearly: process.env.STRIPE_PRICE_PREMIUM_YEARLY },
-  professional: { monthly: process.env.STRIPE_PRICE_PROFESSIONAL_MONTHLY, yearly: process.env.STRIPE_PRICE_PROFESSIONAL_YEARLY },
+  essential: { monthly: process.env['STRIPE_PRICE_ESSENTIAL_MONTHLY'], yearly: process.env['STRIPE_PRICE_ESSENTIAL_YEARLY'] },
+  premium: { monthly: process.env['STRIPE_PRICE_PREMIUM_MONTHLY'], yearly: process.env['STRIPE_PRICE_PREMIUM_YEARLY'] },
+  professional: { monthly: process.env['STRIPE_PRICE_PROFESSIONAL_MONTHLY'], yearly: process.env['STRIPE_PRICE_PROFESSIONAL_YEARLY'] },
 };
 
 export async function POST(req: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const billing = (body?.billing || 'monthly').toLowerCase();
   const email = body?.email as string | undefined;
   const name = body?.name as string | undefined;
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = process.env['STRIPE_SECRET_KEY'];
   if (!stripeKey || !priceEnvMap[plan]) return NextResponse.json({ error: 'Stripe not configured' }, { status: 400 });
   const priceId = (priceEnvMap[plan] as any)?.[billing];
   if (!priceId) return NextResponse.json({ error: 'Price not configured' }, { status: 400 });
@@ -43,4 +43,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
   }
 }
-

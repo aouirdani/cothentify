@@ -2,20 +2,21 @@
 
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'subtle' | 'ghost' | 'destructive' | 'secondary';
 type Size = 'sm' | 'md' | 'lg';
 
-const base = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+const base = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:opacity-50 disabled:cursor-not-allowed';
 const sizes: Record<Size, string> = {
   sm: 'h-8 px-3 text-sm',
   md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-6 text-base',
+  lg: 'h-12 px-5 text-base',
 };
 const variants: Record<Variant, string> = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600',
-  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
-  ghost: 'bg-transparent hover:bg-slate-100 text-slate-800 focus-visible:ring-slate-400 dark:hover:bg-slate-800 dark:text-slate-100',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
+  primary: 'bg-[var(--accent)] text-white shadow-card hover:bg-[var(--accent-600)] hover:shadow-cardHover',
+  subtle: 'bg-[var(--bg-subtle)] text-[var(--fg)] border border-[var(--border)] hover:bg-[color-mix(in_oklab,var(--bg-subtle)_85%,var(--fg))] shadow-soft',
+  ghost: 'bg-transparent text-[var(--fg)] hover:bg-[var(--bg-subtle)]',
+  destructive: 'bg-[var(--error)] text-white hover:opacity-90',
+  secondary: 'bg-[var(--bg-subtle)] text-[var(--fg)] border border-[var(--border)] hover:bg-[color-mix(in_oklab,var(--bg-subtle)_85%,var(--fg))] shadow-soft',
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size };

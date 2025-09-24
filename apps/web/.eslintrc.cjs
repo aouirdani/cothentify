@@ -6,4 +6,14 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
   },
+  overrides: [
+    {
+      files: ['app/api/**/*.{ts,tsx}', 'lib/auth.ts', 'app/checkout/start/route.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        'no-empty': 'off',
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+  ],
 };

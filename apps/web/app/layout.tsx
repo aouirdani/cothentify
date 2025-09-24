@@ -23,12 +23,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link
           rel="preconnect"
-          href={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}
+          href={(process.env['NEXT_PUBLIC_API_URL'] as string) || 'http://localhost:4000'}
           crossOrigin="anonymous"
         />
         <link rel="preconnect" href="https://api.stripe.com" crossOrigin="anonymous" />
       </head>
-      <body className={`min-h-screen bg-gradient-to-b from-white to-slate-100 dark:from-slate-900 dark:to-slate-950 dark:text-slate-100 antialiased font-sans ${plusJakarta.variable}`}>
+      <body className={`min-h-screen antialiased font-sans ${plusJakarta.variable}`}>
         <Providers>
           <ThemeProvider>
           <Header />

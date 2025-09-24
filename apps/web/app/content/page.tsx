@@ -35,7 +35,7 @@ export default function ContentPage() {
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
   const fetcher = (url: string) => fetch(url).then((r) => r.json());
-  const { data, error: swrError, isLoading, mutate } = useSWR(
+  const { data, error: _swrError, isLoading, mutate } = useSWR(
     status === 'authenticated' ? `/api/proxy/api/v1/content?page=${page}&pageSize=${pageSize}` : null,
     fetcher,
     { revalidateOnFocus: false }
@@ -62,8 +62,8 @@ export default function ContentPage() {
       await mutate();
       setPage(1);
       toast.success('Content created');
-    } catch (e: any) {
-      const msg = e?.message || 'Failed to create';
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to create';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -77,8 +77,8 @@ export default function ContentPage() {
       const res = await fetch(`/api/proxy/api/v1/content/${id}/analyze`, { method: 'POST' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       toast.success('Analysis enqueued');
-    } catch (e: any) {
-      const msg = e?.message || 'Failed to enqueue';
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to enqueue';
       setError(msg);
       toast.error(msg);
     }
