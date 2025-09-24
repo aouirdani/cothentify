@@ -175,3 +175,12 @@ Notes
 
 - Payment pages use `dynamic = "force-dynamic"` and Suspense around `useSearchParams`.
 - Webhooks update a minimal in-memory repository (`apps/web/lib/repo/subscriptions.ts`). Replace with your DB.
+## Railway Environment
+
+Set these variables in apps/api service:
+
+- `DATABASE_URL` → From Railway Postgres plugin
+- `REDIS_URL` → From Railway Redis plugin
+- `JWT_SECRET` → Run `openssl rand -base64 32` locally and paste the value
+
+Start command for API on Railway: `pnpm --filter @contentguard/api start:railway`

@@ -1,17 +1,14 @@
-import { config } from 'dotenv';
 import { z } from 'zod';
 
-config();
-
 const EnvSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().default(4000),
-  DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
-  JWT_SECRET: z.string().min(10),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL required'),
+  REDIS_URL: z.string().min(1, 'REDIS_URL required'),
+  JWT_SECRET: z.string().min(16, 'JWT_SECRET 16+ chars required'),
+  PORT: z.coerce.number().optional(),
+  NODE_ENV: z.enum(['development', 'test', 'production']).optional(),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
-  HUGGINGFACE_API_URL: z.string().url().optional(),
+  HUGGINGFACE_API_URL: z.string().optional(),
   HUGGINGFACE_API_TOKEN: z.string().optional(),
   ENABLE_HF_DETECTOR: z
     .union([z.literal('true'), z.literal('false')])
@@ -22,5 +19,12 @@ const EnvSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
 });
 
-export type AppEnv = z.infer<typeof EnvSchema>;
-export const env: AppEnv = EnvSchema.parse(process.env);
+const parsed = EnvSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  const issues = parsed.error.issues.map((i) => `- ${i.path.join('.')}: ${i.message}`).join('\n');
+  console.error('❌ Invalid environment configuration:\n' + issues);
+  process.exit(1);
+}
+
+export const env = parsed.data;
