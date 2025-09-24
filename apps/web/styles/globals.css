@@ -9,7 +9,7 @@
 /* Base typography and layout */
 @layer base {
   html, body, #__next { height: 100%; }
-  body { @apply text-slate-900 dark:text-slate-100 antialiased; }
+  body { @apply text-slate-900 antialiased; }
   ::selection { @apply bg-accent/30; }
   h1 { @apply text-3xl md:text-4xl font-semibold tracking-tight; }
   h2 { @apply text-2xl md:text-3xl font-semibold tracking-tight; }
@@ -30,9 +30,7 @@
     background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
     background-size: 18px 18px;
   }
-  .dark .bg-grid {
-    background-image: radial-gradient(#1f2937 1px, transparent 1px);
-  }
+  /* Dark mode removed */
 }
 
 code {

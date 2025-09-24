@@ -6,14 +6,12 @@ import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useEffect, useState } from 'react';
-import { useTheme } from './ThemeProvider';
-import { MoonIcon, SunIcon } from '@heroicons/react/24/outline';
+// Dark mode removed
 
 export function Header() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [plan, setPlan] = useState<string | null>(null);
-  const { theme, toggle } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -61,13 +59,7 @@ export function Header() {
             <div className="h-8 w-40" />
           ) : (
             <>
-              <button aria-label="Toggle theme" onClick={toggle} className="rounded-md border px-2 py-1 text-sm">
-                {theme === 'dark' ? (
-                  <span className="inline-flex items-center gap-1"><SunIcon className="h-4 w-4"/> Light</span>
-                ) : (
-                  <span className="inline-flex items-center gap-1"><MoonIcon className="h-4 w-4"/> Dark</span>
-                )}
-              </button>
+              {/* Theme toggle removed */}
               {status === 'authenticated' ? (
                 <>
                   {plan && (
