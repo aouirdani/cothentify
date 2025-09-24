@@ -1,4 +1,4 @@
-import { PrismaClient, PlanTier } from '@prisma/client';
+import { PrismaClient, type SubscriptionStatus } from '@prisma/client';
 
 export type Provider = 'stripe' | 'paypal';
 export type Status = 'incomplete' | 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
@@ -9,7 +9,7 @@ export interface UpsertStatusArgs {
   externalId: string; // Stripe subscription ID or PayPal order/subscription ID
   status: Status;
   email?: string;
-  plan?: keyof typeof PlanTier; // 'FREEMIUM' | 'ESSENTIAL' | 'PREMIUM' | 'PROFESSIONAL'
+  plan?: string; // stored as string enum
   billing?: Billing; // Prisma BillingCycle enum shape
   meta?: Record<string, unknown>;
 }
@@ -21,17 +21,19 @@ export async function upsertSubscriptionStatus(prisma: PrismaClient, args: Upser
 
   const billingCycle = billing ?? null;
 
+  const toSubStatus = (s: unknown) => String(s).toUpperCase() as SubscriptionStatus;
+
   await prisma.billingSubscription.upsert({
     where: { stripeSubscriptionId: externalId },
     update: {
-      status,
+      status: toSubStatus(status),
       billingCycle: billingCycle as any,
       meta: meta as any,
     },
     create: {
       email: email || 'unknown@example.com',
       plan: (plan || 'FREEMIUM') as any,
-      status,
+      status: toSubStatus(status),
       billingCycle: billingCycle as any,
       stripeSubscriptionId: externalId,
       meta: meta as any,
@@ -46,4 +48,3 @@ export async function upsertSubscriptionStatus(prisma: PrismaClient, args: Upser
     });
   }
 }
-

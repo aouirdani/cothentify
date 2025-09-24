@@ -5,7 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import jwt from '@fastify/jwt';
-import rawBody from '@fastify/raw-body';
+import fastifyRawBody from 'fastify-raw-body';
 import compress from '@fastify/compress';
 import { env } from './env';
 import { registerRoutes } from './routes';
@@ -23,7 +23,12 @@ export async function buildServer() {
   await app.register(compress, { global: true, encodings: ['br', 'gzip'] });
   await app.register(rateLimit, { max: 200, timeWindow: '1 minute' });
   await app.register(jwt, { secret: env.JWT_SECRET });
-  await app.register(rawBody, { field: 'rawBody', global: false, encoding: 'utf8', runFirst: true });
+  await app.register(fastifyRawBody, {
+    field: 'rawBody',
+    global: false,
+    encoding: 'utf8',
+    runFirst: true,
+  });
 
   await app.register(swagger, {
     openapi: {

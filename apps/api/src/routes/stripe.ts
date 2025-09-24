@@ -13,8 +13,10 @@ export async function stripeRoutes(app: FastifyInstance) {
       if (!env.STRIPE_WEBHOOK_SECRET || !env.STRIPE_SECRET_KEY) return reply.code(400).send({ ok: false });
       const sig = req.headers['stripe-signature'] as string | undefined;
       if (!sig) return reply.code(400).send({ error: 'Missing signature' });
-      const { default: Stripe } = await import('stripe');
-      const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' } as any);
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2024-06-20',
+      } as any);
       let event: any;
       try {
         const raw = (req as any).rawBody as string;
