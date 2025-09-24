@@ -1,4 +1,4 @@
-import { PrismaClient, PlanTier } from '@prisma/client';
+import { PrismaClient, PlanTier, SubscriptionStatus } from '@prisma/client';
 
 export type Provider = 'stripe' | 'paypal';
 export type Status = 'incomplete' | 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
@@ -21,17 +21,36 @@ export async function upsertSubscriptionStatus(prisma: PrismaClient, args: Upser
 
   const billingCycle = billing ?? null;
 
+  const toPrismaStatus = (s: Status): SubscriptionStatus => {
+    switch (s) {
+      case 'incomplete':
+        return SubscriptionStatus.INCOMPLETE;
+      case 'active':
+        return SubscriptionStatus.ACTIVE;
+      case 'trialing':
+        return SubscriptionStatus.TRIALING;
+      case 'past_due':
+        return SubscriptionStatus.PAST_DUE;
+      case 'canceled':
+        return SubscriptionStatus.CANCELED;
+      case 'unpaid':
+        return SubscriptionStatus.UNPAID;
+      default:
+        return SubscriptionStatus.INCOMPLETE;
+    }
+  };
+
   await prisma.billingSubscription.upsert({
     where: { stripeSubscriptionId: externalId },
     update: {
-      status,
+      status: toPrismaStatus(status),
       billingCycle: billingCycle as any,
       meta: meta as any,
     },
     create: {
       email: email || 'unknown@example.com',
       plan: (plan || 'FREEMIUM') as any,
-      status,
+      status: toPrismaStatus(status),
       billingCycle: billingCycle as any,
       stripeSubscriptionId: externalId,
       meta: meta as any,
@@ -46,4 +65,3 @@ export async function upsertSubscriptionStatus(prisma: PrismaClient, args: Upser
     });
   }
 }
-

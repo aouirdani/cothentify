@@ -5,7 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import jwt from '@fastify/jwt';
-import rawBody from '@fastify/raw-body';
+import rawBody from 'fastify-raw-body';
 import compress from '@fastify/compress';
 import { env } from './env';
 import { registerRoutes } from './routes';
