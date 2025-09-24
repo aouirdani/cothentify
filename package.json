@@ -1,0 +1,31 @@
+{
+  "name": "contentguard-pro",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ContentGuard Pro monorepo (web + api + shared)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "dev": "pnpm -w -C apps/web dev & pnpm -w -C apps/api dev",
+    "dev:web": "pnpm -C apps/web dev",
+    "dev:api": "pnpm -C apps/api dev",
+    "build": "pnpm -C apps/web build && pnpm -C apps/api build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -b"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  }
+}

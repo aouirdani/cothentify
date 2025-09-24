@@ -1,0 +1,77 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: contentguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: contentguard
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: contentguard-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    volumes:
+      - ./redis-data:/data
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: contentguard-worker
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/contentguard?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:-replace-me}
+      PORT: 4000
+    depends_on:
+      - postgres
+      - redis
+    command: ["node", "apps/api/dist/worker.js"]
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: contentguard-api
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/contentguard?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:-replace-me}
+      PORT: 4000
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - '4000:4000'
+    command: ["node", "apps/api/dist/index.js"]
+
+  api-dev:
+    image: node:20-alpine
+    container_name: contentguard-api-dev
+    working_dir: /workspace
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/contentguard?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:-replace-me}
+      PORT: 4000
+      NODE_ENV: development
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - '4000:4000'
+    command: ["sh", "-lc", "corepack enable && corepack prepare pnpm@8.15.0 --activate && pnpm -C apps/api install && pnpm -C apps/api prisma:generate && pnpm -C apps/api dev"]

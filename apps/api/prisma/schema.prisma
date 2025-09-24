@@ -1,0 +1,159 @@
+// Prisma schema for ContentGuard Pro
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  email        String   @unique
+  name         String?
+  role         Role     @default(MEMBER)
+  plan         PlanTier @default(FREEMIUM)
+  // relations
+  projects     Project[]
+  content      ContentPiece[]
+  writerProfile WriterProfile?
+  // Users can be contacts for many clients
+  contactOfClients Client[] @relation("ClientContacts")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  domain    String?
+  contacts  User[]   @relation("ClientContacts")
+  projects  Project[]
+  subscription Subscription?
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  name        String
+  description String?
+  client      Client?       @relation(fields: [clientId], references: [id])
+  clientId    String?
+  owner       User?         @relation(fields: [ownerId], references: [id])
+  ownerId     String?
+  contents    ContentPiece[]
+
+  @@index([clientId])
+}
+
+model ContentPiece {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  title       String
+  language    String       @default("en")
+  body        String
+  status      ContentStatus @default(DRAFT)
+  project     Project?      @relation(fields: [projectId], references: [id])
+  projectId   String?
+  author      User?         @relation(fields: [authorId], references: [id])
+  authorId    String?
+  analyses    AIAnalysis[]
+
+  @@index([authorId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+model AIAnalysis {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  modelCandidates String[]
+  aiProbability   Float
+  confidence      Float
+  details         Json
+  content         ContentPiece @relation(fields: [contentId], references: [id])
+  contentId       String
+
+  @@index([contentId, createdAt])
+}
+
+model WriterProfile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  skills    String[]
+  rating    Float?   @default(0)
+  bio       String?
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plan      String
+  status    String
+  agency    Client   @relation(fields: [clientId], references: [id])
+  clientId  String   @unique
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+  CLIENT
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum PlanTier {
+  FREEMIUM
+  ESSENTIAL
+  PREMIUM
+  PROFESSIONAL
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model BillingSubscription {
+  id                  String              @id @default(cuid())
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  user                User?               @relation(fields: [userId], references: [id])
+  userId              String?
+  email               String
+  plan                PlanTier
+  status              SubscriptionStatus  @default(ACTIVE)
+  billingCycle        BillingCycle?
+  stripeCustomerId    String?
+  stripeSubscriptionId String?            @unique
+  currentPeriodEnd    DateTime?
+  meta                Json?
+
+  @@index([email])
+  @@index([createdAt])
+}

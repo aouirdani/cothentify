@@ -1,0 +1,9 @@
+node_modules
+.next
+dist
+.pnpm-store
+postgres-data
+redis-data
+**/.env
+**/.env.*
+**/.DS_Store
