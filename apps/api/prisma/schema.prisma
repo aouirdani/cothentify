@@ -24,6 +24,7 @@ model User {
   writerProfile WriterProfile?
   // Users can be contacts for many clients
   contactOfClients Client[] @relation("ClientContacts")
+  billingSubscriptions BillingSubscription[]
 }
 
 model Client {
