@@ -3,13 +3,13 @@ import { PaypalCreateBodySchema } from '../../../../lib/schemas';
 import { getPriceUSD } from '../../../../lib/payments';
 
 function paypalBase() {
-  const env = (process.env.PAYPAL_ENV || 'sandbox').toLowerCase();
+  const env = (process.env['PAYPAL_ENV'] || 'sandbox').toLowerCase();
   return env === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 }
 
 async function getAccessToken() {
-  const client = process.env.PAYPAL_CLIENT_ID || '';
-  const secret = process.env.PAYPAL_CLIENT_SECRET || '';
+  const client = process.env['PAYPAL_CLIENT_ID'] || '';
+  const secret = process.env['PAYPAL_CLIENT_SECRET'] || '';
   if (!client || !secret) throw new Error('PayPal credentials missing');
   const res = await fetch(`${paypalBase()}/v1/oauth2/token`, {
     method: 'POST',
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const parsed = PaypalCreateBodySchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'invalid body', details: parsed.error.flatten() }, { status: 400 });
     const { plan, billing } = parsed.data;
-    const origin = process.env.NEXTAUTH_URL || new URL(req.url).origin;
+    const origin = process.env['NEXTAUTH_URL'] || new URL(req.url).origin;
     const accessToken = await getAccessToken();
     const returnUrl = new URL('/checkout/paypal/return', origin);
     returnUrl.searchParams.set('plan', plan);

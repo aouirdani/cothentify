@@ -3,40 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --ring: 0 0 0 2px rgba(59,130,246,0.15);
+  --accent: #15B77E;
+  --accent-600: #0F9967;
+  --accent-50: #EBF8F3;
+  --fg: #0A0A0A;
+  --fg-muted: #4B5563;
+  --bg: #FFFFFF;
+  --bg-subtle: #F7F7F8;
+  --border: #E6E8EB;
+  --ring: #B7EBD7;
+  --warning: #F59E0B;
+  --error: #DC2626;
+  --success: #16A34A;
+}
+
+.dark {
+  --accent: #1CD290;
+  --accent-600: #15B77E;
+  --accent-50: #0B2F24;
+  --fg: #F3F4F6;
+  --fg-muted: #9CA3AF;
+  --bg: #0B0B0C;
+  --bg-subtle: #121214;
+  --border: #2A2A2E;
+  --ring: #1F8A62;
+  --warning: #F59E0B;
+  --error: #F87171;
+  --success: #22C55E;
 }
 
 /* Base typography and layout */
 @layer base {
   html, body, #__next { height: 100%; }
-  body { @apply text-slate-900 dark:text-slate-100 antialiased; }
-  ::selection { @apply bg-accent/30; }
-  h1 { @apply text-3xl md:text-4xl font-semibold tracking-tight; }
-  h2 { @apply text-2xl md:text-3xl font-semibold tracking-tight; }
-  h3 { @apply text-xl md:text-2xl font-semibold; }
+  body { color: var(--fg); background: var(--bg); font-feature-settings: "cv02","cv03","cv04","cv11"; }
+  ::selection { background: color-mix(in oklab, var(--accent) 24%, transparent); }
+  h1 { @apply text-4xl md:text-5xl font-semibold tracking-tight; }
+  h2 { @apply text-3xl md:text-4xl font-semibold tracking-tight; }
+  h3 { @apply text-2xl md:text-3xl font-semibold; }
 }
 
 /* Utilities */
 @layer utilities {
-  .container { @apply mx-auto max-w-6xl px-4; }
-  .glow { box-shadow: 0 0 120px 40px rgba(59,130,246,0.15); }
+  .container { @apply mx-auto max-w-7xl px-4 md:px-6; }
   .text-gradient {
-    background: linear-gradient(90deg, #1d4ed8, #3b82f6 60%, #22d3ee);
+    background: linear-gradient(90deg, var(--fg) 0%, color-mix(in oklab, var(--accent) 70%, var(--fg)) 60%, var(--accent));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .bg-grid {
-    background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-    background-size: 18px 18px;
-  }
-  .dark .bg-grid {
-    background-image: radial-gradient(#1f2937 1px, transparent 1px);
-  }
+  .surface { background: var(--bg); border-color: var(--border); }
+  .surface-subtle { background: var(--bg-subtle); }
+  .focus-ring { box-shadow: 0 0 0 3px var(--ring); }
+  .bg-grid { background-image: radial-gradient(color-mix(in oklab, var(--border) 65%, transparent) 1px, transparent 1px); background-size: 18px 18px; }
 }
 
-code {
-  background: #f1f5f9;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-}
+code { background: color-mix(in oklab, var(--bg-subtle) 80%, transparent); padding: 0.125rem 0.25rem; border-radius: 0.25rem; }

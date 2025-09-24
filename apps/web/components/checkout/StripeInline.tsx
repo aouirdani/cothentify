@@ -15,7 +15,7 @@ type Props = {
 };
 
 export default function StripeInline({ plan, billing, payer, agree }: Props) {
-  const stripePromise = useMemo(() => loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''), []);
+  const stripePromise = useMemo(() => loadStripe(process.env['NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'] || ''), []);
   return (
     <Elements stripe={stripePromise} options={{ appearance: { theme: 'stripe' } }}>
       <StripeForm plan={plan} billing={billing} payer={payer} agree={agree} />
@@ -117,4 +117,3 @@ function StripeForm({ plan, billing, payer, agree }: Props) {
     </div>
   );
 }
-

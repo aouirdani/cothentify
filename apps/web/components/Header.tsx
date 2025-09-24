@@ -37,17 +37,17 @@ export function Header() {
   const NavLink = ({ href, label }: { href: string; label: string }) => (
     <Link
       href={href}
-      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-100 ${pathname === href ? 'text-slate-900' : 'text-slate-600'}`}
+      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--bg-subtle)] ${pathname === href ? 'text-[var(--fg)]' : 'text-[var(--fg-muted)]'}`}
     >
       {label}
     </Link>
   );
 
   return (
-    <header className="mb-8 rounded-xl border bg-white/90 backdrop-blur shadow-soft">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-40 mb-8 border-b bg-[color-mix(in_oklab,var(--bg) 80%,transparent)] backdrop-blur supports-[backdrop-filter]:bg-[color-mix(in_oklab,var(--bg) 80%,transparent)]">
+      <div className="container flex h-14 items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-base font-semibold tracking-tight text-slate-900">
+          <Link href="/" className="text-base font-semibold tracking-tight text-[var(--fg)]">
             <span className="text-gradient">Cothentify</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
@@ -61,7 +61,7 @@ export function Header() {
             <div className="h-8 w-40" />
           ) : (
             <>
-              <button aria-label="Toggle theme" onClick={toggle} className="rounded-md border px-2 py-1 text-sm">
+              <button aria-label="Toggle theme" onClick={toggle} className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-sm text-[var(--fg)] hover:bg-[var(--bg-subtle)]">
                 {theme === 'dark' ? (
                   <span className="inline-flex items-center gap-1"><SunIcon className="h-4 w-4"/> Light</span>
                 ) : (
@@ -72,16 +72,17 @@ export function Header() {
                 <>
                   {plan && (
                     <Link href="/pricing" className="hover:opacity-80">
-                      <Badge color="blue">{plan}</Badge>
+                      <Badge color="accent">{plan}</Badge>
                     </Link>
                   )}
-                  <span className="hidden sm:inline text-sm text-slate-600">{session?.user?.email}</span>
-                  <Button variant="secondary" size="sm" onClick={() => signOut()}>Sign out</Button>
+                  <span className="hidden sm:inline text-sm text-[var(--fg-muted)]">{session?.user?.email}</span>
+                  <Link href="/content" className="hidden md:inline"><Button size="sm">New Check</Button></Link>
+                  <Button variant="subtle" size="sm" onClick={() => signOut()}>Sign out</Button>
                 </>
               ) : (
                 <>
                   <Link href="/auth/login">
-                    <Button variant="secondary" size="sm">Log in</Button>
+                    <Button variant="subtle" size="sm">Log in</Button>
                   </Link>
                   <Link href="/auth/signup">
                     <Button size="sm">Sign up</Button>

@@ -5,8 +5,8 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature');
-  const secret = process.env.STRIPE_WEBHOOK_SECRET || '';
-  const key = process.env.STRIPE_SECRET_KEY || '';
+  const secret = process.env['STRIPE_WEBHOOK_SECRET'] || '';
+  const key = process.env['STRIPE_SECRET_KEY'] || '';
   if (!sig || !secret || !key) return NextResponse.json({ error: 'Webhook not configured' }, { status: 400 });
 
   const rawBody = await req.text();
@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
         const plan = (s.metadata?.plan as any) || 'freemium';
         const billing = (s.metadata?.billing as any) || 'monthly';
         // Forward to API for persistence
-        const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        const token = process.env.WEBHOOK_API_TOKEN || '';
+        const api = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+        const token = process.env['WEBHOOK_API_TOKEN'] || '';
         await fetch(`${api}/api/v1/billing/status`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
           body: JSON.stringify({ provider: 'stripe', externalId: subId, status: 'active', email, plan: (plan || '').toUpperCase(), billing: (billing || '').toUpperCase(), meta: s }),
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
           paused: 'paused',
         };
         const status = statusMap[(sub.status || 'active').toString()] || 'active';
-        const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        const token = process.env.WEBHOOK_API_TOKEN || '';
+        const api = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+        const token = process.env['WEBHOOK_API_TOKEN'] || '';
         await fetch(`${api}/api/v1/billing/status`, {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
           body: JSON.stringify({ provider: 'stripe', externalId: sub.id, status, meta: sub }),
