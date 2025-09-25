@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 type Provider = 'deepinfra' | 'together' | 'groq' | 'openai' | 'custom' | 'ollama';
+const LANGS = ['en','fr','de','es','it','pt'] as const;
+type Lang = typeof LANGS[number];
 
 function getApiConfig() {
   const provider = (process.env['LLM_PROVIDER'] as Provider) || 'deepinfra';
@@ -27,9 +29,12 @@ function getApiConfig() {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const keyword = String(body?.keyword || '').trim();
-  const language = String(body?.language || 'en');
+  const language = String(body?.language || 'en').toLowerCase();
   const targetWords = Math.max(600, Math.min(2000, Number(body?.words || 1200)));
   if (!keyword) return NextResponse.json({ error: 'Missing keyword' }, { status: 400 });
+  if (!LANGS.includes(language as Lang)) {
+    return NextResponse.json({ error: 'Invalid language', allowed: LANGS }, { status: 400 });
+  }
 
   const { base, apiKey, model } = getApiConfig();
   if (!apiKey && (process.env['LLM_PROVIDER'] as Provider) !== 'ollama')
