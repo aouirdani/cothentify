@@ -19,6 +19,11 @@ export default function SeoGeneratorPage() {
     setError(null);
     setContent('');
     try {
+      if (!keyword.trim()) {
+        setError('Please enter a keyword');
+        setLoading(false);
+        return;
+      }
       const res = await fetch('/api/seo/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,7 +70,7 @@ export default function SeoGeneratorPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button onClick={generate} disabled={!keyword.trim() || loading}>{loading ? 'Generating…' : 'Generate'}</Button>
+            <Button onClick={generate} disabled={loading}>{loading ? 'Generating…' : 'Generate'}</Button>
           </div>
           {error && <div className="text-sm text-red-600">{error}</div>}
         </div>
@@ -78,4 +83,3 @@ export default function SeoGeneratorPage() {
     </div>
   );
 }
-
