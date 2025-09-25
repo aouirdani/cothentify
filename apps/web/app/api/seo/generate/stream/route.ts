@@ -8,15 +8,16 @@ function getConfig() {
   const model = process.env['LLM_MODEL'] || 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo';
   let base = process.env['LLM_API_BASE'] || '';
   if (!base) {
-    base = provider === 'deepinfra'
-      ? 'https://api.deepinfra.com/v1/openai'
-      : provider === 'together'
-      ? 'https://api.together.xyz/v1'
-      : provider === 'groq'
-      ? 'https://api.groq.com/openai/v1'
-      : provider === 'ollama'
-      ? 'http://localhost:11434'
-      : 'https://api.openai.com/v1';
+    base =
+      provider === 'deepinfra'
+        ? 'https://api.deepinfra.com/v1/openai'
+        : provider === 'together'
+        ? 'https://api.together.xyz/v1'
+        : provider === 'groq'
+        ? 'https://api.groq.com/openai/v1'
+        : provider === 'ollama'
+        ? 'http://localhost:11434'
+        : 'https://api.openai.com/v1';
   }
   return { provider, base, apiKey, model } as const;
 }
@@ -49,42 +50,77 @@ Hard requirements:
 - Suggest 3–5 internal link anchor ideas and 3–5 external reputable sources (as a list, do not fabricate URLs).
 - Add a small list of key terms and semantic variations used.
 - Do not mention that you are an AI model; avoid generic disclaimers.`;
+
   const usr = `Main keyword: ${keyword}
 Language: ${language}
 Goal: Generate an SEO-ready, human-sounding article with the above structure.`;
 
+  // Ollama local streaming (JSON Lines)
   if (provider === 'ollama') {
-    // Use Ollama local streaming API (not OpenAI-compatible). Stream plain text chunks.
     const upstream = await fetch(`${base}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt: `${sys}
-
-${usr}`, options: { temperature: 0.7 }, stream: true }),
+      body: JSON.stringify({
+        model,
+        prompt: `${sys}\n\n${usr}`,
+        options: { temperature: 0.7 },
+        stream: true,
+      }),
     });
     if (!upstream.ok || !upstream.body) return new Response('Upstream error', { status: 500 });
+
     const decoder = new TextDecoder();
     const encoder = new TextEncoder();
+
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         const reader = upstream.body!.getReader();
-        const pump = (): any => reader.read().then(({ done, value }) => {
-          if (done) { controller.close(); return; }
-          const chunk = decoder.decode(value);
-          // Ollama streams JSON lines; we forward raw text best-effort
-          controller.enqueue(encoder.encode(chunk));
-          return pump();
-        }).catch((e) => { controller.error(e); });
+        let buffer = '';
+        const pump = (): any =>
+          reader
+            .read()
+            .then(({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split(/\r?\n/);
+              buffer = lines.pop() ?? '';
+              for (const raw of lines) {
+                if (!raw) continue;
+                try {
+                  const msg = JSON.parse(raw);
+                  const text = msg?.response ?? '';
+                  if (text) controller.enqueue(encoder.encode(text));
+                  // msg.done may appear on final line; we simply close when upstream ends.
+                } catch {
+                  // ignore partial/non-JSON fragments
+                }
+              }
+              return pump();
+            })
+            .catch((e) => controller.error(e));
         return pump();
-      }
+      },
     });
-    return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' } });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+      },
+    });
   }
 
-  // OpenAI-compatible streaming
+  // OpenAI-compatible streaming (DeepInfra, Together, Groq, OpenAI, custom)
   const upstream = await fetch(`${base}/chat/completions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
     body: JSON.stringify({
       model,
       messages: [
@@ -96,37 +132,58 @@ ${usr}`, options: { temperature: 0.7 }, stream: true }),
       stream: true,
     }),
   });
+
   if (!upstream.ok || !upstream.body) {
     const err = await upstream.text().catch(() => 'Upstream error');
     return new Response(err, { status: 500 });
   }
+
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
+
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const reader = upstream.body!.getReader();
       let buffer = '';
-      const pump = (): any => reader.read().then(({ done, value }) => {
-        if (done) { controller.close(); return; }
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('
-');
-        buffer = lines.pop() || '';
-        for (const raw of lines) {
-          const line = raw.trim();
-          if (!line || !line.startsWith('data:')) continue;
-          const data = line.slice(5).trim();
-          if (data === '[DONE]') { controller.close(); return; }
-          try {
-            const json = JSON.parse(data);
-            const delta = json?.choices?.[0]?.delta?.content || '';
-            if (delta) controller.enqueue(encoder.encode(delta));
-          } catch { /* ignore non-JSON lines */ }
-        }
-        return pump();
-      }).catch((e) => { controller.error(e); });
+      const pump = (): any =>
+        reader
+          .read()
+          .then(({ done, value }) => {
+            if (done) {
+              controller.close();
+              return;
+            }
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() ?? '';
+            for (const raw of lines) {
+              const line = raw.trim();
+              if (!line || !line.startsWith('data:')) continue;
+              const data = line.slice(5).trim();
+              if (data === '[DONE]') {
+                controller.close();
+                return;
+              }
+              try {
+                const json = JSON.parse(data);
+                const delta = json?.choices?.[0]?.delta?.content ?? '';
+                if (delta) controller.enqueue(encoder.encode(delta));
+              } catch {
+                // ignore non-JSON lines
+              }
+            }
+            return pump();
+          })
+          .catch((e) => controller.error(e));
       return pump();
-    }
+    },
   });
-  return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' } });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }
