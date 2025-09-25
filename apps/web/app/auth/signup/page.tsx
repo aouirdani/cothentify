@@ -6,8 +6,10 @@ import { Card, CardHeader } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import toast from 'react-hot-toast';
+import { useI18n } from '../../../components/LocaleProvider';
 
 export default function SignupPage() {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,27 +36,26 @@ export default function SignupPage() {
   return (
     <div className="mx-auto max-w-md">
       <Card>
-        <CardHeader title="Create account" subtitle="Start your Cothentify trial" />
+        <CardHeader title={t('auth.createAccount')} subtitle="Start your Cothentify trial" />
         <form onSubmit={submit} className="grid gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium">Full name</label>
+            <label className="mb-1 block text-sm font-medium">{t('auth.fullName')}</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Work email</label>
+            <label className="mb-1 block text-sm font-medium">{t('auth.workEmail')}</label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Password</label>
+            <label className="mb-1 block text-sm font-medium">{t('auth.password')}</label>
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <Button type="submit" disabled={loading}>{loading ? 'Creating…' : 'Sign up'}</Button>
+          <Button type="submit" disabled={loading}>{loading ? t('auth.creating') : t('auth.signup')}</Button>
         </form>
         <div className="mt-3 text-sm">
-          <a className="text-blue-600 underline" href="/auth/login">Have an account? Sign in</a>
+          <a className="text-blue-600 underline" href="/auth/login">{t('auth.haveAccount')}</a>
         </div>
       </Card>
     </div>
   );
 }
-
