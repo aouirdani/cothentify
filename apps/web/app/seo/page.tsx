@@ -61,18 +61,16 @@ export default function SeoGeneratorPage() {
     }
   }
 
-    async function save() {
+  async function save() {
     if (!content.trim()) { toast.error('Nothing to save'); return; }
-    const lines = content.split('
-');
+    const lines = content.split(/\r?\n/);
     let title = 'Generated Article';
     let start = 0;
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i].trim();
       if (l.startsWith('# ')) { title = l.replace(/^#\s+/, '').trim() || title; start = i + 1; break; }
     }
-    const body = lines.slice(start).join('
-').trim();
+    const body = lines.slice(start).join('\n').trim();
     try {
       const res = await fetch('/api/proxy/api/v1/content', {
         method: 'POST',
@@ -85,7 +83,8 @@ export default function SeoGeneratorPage() {
       toast.error(e?.message || 'Save failed');
     }
   }
-return (
+
+  return (
     <div className="grid gap-6">
       <Card>
         <CardHeader title="SEO Article Generator" subtitle="Generate a human-quality article from a keyword using Llama 3.1 70B." />

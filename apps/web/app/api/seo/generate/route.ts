@@ -37,18 +37,32 @@ export async function POST(req: NextRequest) {
   }
 
   const { base, apiKey, model } = getApiConfig();
-  if (!apiKey && (process.env['LLM_PROVIDER'] as Provider) !== 'ollama')
+  const overrideKey = req.headers.get('x-llm-api-key') || undefined;
+  const key = overrideKey || apiKey;
+  if (!key && (process.env['LLM_PROVIDER'] as Provider) !== 'ollama')
     return NextResponse.json({ error: 'LLM not configured (set LLM_API_KEY for provider)' }, { status: 400 });
 
   // Simple OpenAI-compatible chat/completions call
-  const sys = `You are an expert SEO copywriter. Write natural, human-sounding articles that are helpful and well-structured. Avoid generic fluff and AI tells. Include:
-  - A compelling H1 title with the main keyword
-  - A short meta title and meta description (<= 160 chars)
-  - An outline with H2/H3s
-  - The full article body (~${targetWords} words), with factual, clear explanations
-  - Use ${language.toUpperCase()} language.
-  - Do not mention that you are an AI.`;
-  const usr = `Main keyword: ${keyword}`;
+  const sys = `You are an expert human SEO content writer.
+Write a helpful, original, and engaging long-form article in ${language.toUpperCase()} that genuinely reads like it was written by a professional human.
+
+Hard requirements:
+- Length: ~${targetWords} words (±10%).
+- Style: clear, concise, and actionable; avoid filler, clichés, or obvious AI phrasing.
+- Use Markdown formatting with proper headings (# for H1, ## for H2, ### for H3).
+- Include, at the very top (before the body):
+  1) Meta Title (≤ 60 chars)
+  2) Meta Description (≤ 160 chars)
+  3) Slug (kebab-case)
+  4) TL;DR (1–2 sentences)
+- Provide a structured outline with H2s and H3s.
+- Article body: compelling intro, well-structured sections, and a practical conclusion with a clear call-to-action.
+- Add a short FAQ (5 Q&As) at the end.
+- Suggest 3–5 internal link anchor ideas and 3–5 external reputable sources (as a list, do not fabricate URLs).
+- Add a small list of key terms and semantic variations used.
+- Do not mention that you are an AI model; avoid generic disclaimers.
+`;
+  const usr = `Main keyword: ${keyword}\nLanguage: ${language}\nGoal: Generate an SEO-ready, human-sounding article with the above structure.`;
 
   try {
     if ((process.env['LLM_PROVIDER'] as Provider) === 'ollama') {
@@ -74,7 +88,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${key}`,
         },
         body: JSON.stringify({
           model,
@@ -83,7 +97,8 @@ export async function POST(req: NextRequest) {
             { role: 'user', content: usr },
           ],
           temperature: 0.7,
-          max_tokens: 2048,
+          top_p: 0.95,
+          max_tokens: 4096,
         }),
       });
       if (!res.ok) {
