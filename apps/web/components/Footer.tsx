@@ -21,3 +21,4 @@ export default function Footer() {
     </footer>
   );
 }
+"use client";
