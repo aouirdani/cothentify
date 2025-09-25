@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
+import LanguageButton from './LanguageButton';
 import { Badge } from './ui/badge';
 import { useEffect, useState } from 'react';
 // Dark mode removed
@@ -72,6 +73,7 @@ export function Header() {
                 </>
               ) : (
                 <>
+                  <LanguageButton />
                   <Link href="/auth/login">
                     <Button variant="secondary" size="sm">Log in</Button>
                   </Link>
