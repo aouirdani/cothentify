@@ -10,7 +10,7 @@ type Lang = typeof LANGS[number];
 function getApiConfig() {
   const provider = (process.env['LLM_PROVIDER'] as Provider) || 'deepinfra';
   const apiKey = process.env['LLM_API_KEY'] || '';
-  const model = process.env['LLM_MODEL'] || 'meta-llama/Meta-Llama-3.1-70B-Instruct';
+  const model = process.env['LLM_MODEL'] || 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo';
   let base = process.env['LLM_API_BASE'] || '';
   if (!base) {
     base = provider === 'deepinfra'
