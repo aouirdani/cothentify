@@ -3,15 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-type Provider = 'together' | 'groq' | 'openai' | 'custom' | 'ollama';
+type Provider = 'deepinfra' | 'together' | 'groq' | 'openai' | 'custom' | 'ollama';
 
 function getApiConfig() {
-  const provider = (process.env['LLM_PROVIDER'] as Provider) || 'together';
+  const provider = (process.env['LLM_PROVIDER'] as Provider) || 'deepinfra';
   const apiKey = process.env['LLM_API_KEY'] || '';
   const model = process.env['LLM_MODEL'] || 'meta-llama/Meta-Llama-3.1-70B-Instruct';
   let base = process.env['LLM_API_BASE'] || '';
   if (!base) {
-    base = provider === 'together'
+    base = provider === 'deepinfra'
+      ? 'https://api.deepinfra.com/v1/openai'
+      : provider === 'together'
       ? 'https://api.together.xyz/v1'
       : provider === 'groq'
       ? 'https://api.groq.com/openai/v1'
@@ -30,7 +32,8 @@ export async function POST(req: NextRequest) {
   if (!keyword) return NextResponse.json({ error: 'Missing keyword' }, { status: 400 });
 
   const { base, apiKey, model } = getApiConfig();
-  if (!apiKey) return NextResponse.json({ error: 'LLM not configured' }, { status: 400 });
+  if (!apiKey && (process.env['LLM_PROVIDER'] as Provider) !== 'ollama')
+    return NextResponse.json({ error: 'LLM not configured (set LLM_API_KEY for provider)' }, { status: 400 });
 
   // Simple OpenAI-compatible chat/completions call
   const sys = `You are an expert SEO copywriter. Write natural, human-sounding articles that are helpful and well-structured. Avoid generic fluff and AI tells. Include:
