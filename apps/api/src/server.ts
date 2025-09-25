@@ -45,7 +45,7 @@ export async function buildServer() {
   await app.register(swagger, {
     openapi: {
       info: {
-        title: 'ContentGuard Pro API',
+        title: 'Cothentify API',
         version: '0.1.0',
       },
       servers: [{ url: 'http://localhost:' + env.PORT }],

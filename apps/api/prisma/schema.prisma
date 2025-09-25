@@ -1,4 +1,4 @@
-// Prisma schema for ContentGuard Pro
+// Prisma schema for Cothentify
 // Database: PostgreSQL
 
 generator client {

@@ -183,4 +183,4 @@ Set these variables in apps/api service:
 - `REDIS_URL` → From Railway Redis plugin
 - `JWT_SECRET` → Run `openssl rand -base64 32` locally and paste the value
 
-Start command for API on Railway: `pnpm --filter @contentguard/api start:railway`
+Start command for API on Railway: `pnpm --filter @cothentify/api start:railway`

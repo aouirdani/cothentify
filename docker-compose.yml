@@ -2,12 +2,12 @@ version: '3.9'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: contentguard-postgres
+    container_name: cothentify-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: contentguard
+      POSTGRES_DB: cothentify
     ports:
       - '5432:5432'
     volumes:
@@ -15,7 +15,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: contentguard-redis
+    container_name: cothentify-redis
     restart: unless-stopped
     ports:
       - '6379:6379'
@@ -27,10 +27,10 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: contentguard-worker
+    container_name: cothentify-worker
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/contentguard?schema=public}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/cothentify?schema=public}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:-replace-me}
       PORT: 4000
@@ -43,10 +43,10 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: contentguard-api
+    container_name: cothentify-api
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/contentguard?schema=public}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/cothentify?schema=public}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:-replace-me}
       PORT: 4000
@@ -59,10 +59,10 @@ services:
 
   api-dev:
     image: node:20-alpine
-    container_name: contentguard-api-dev
+    container_name: cothentify-api-dev
     working_dir: /workspace
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/contentguard?schema=public}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/cothentify?schema=public}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:-replace-me}
       PORT: 4000
