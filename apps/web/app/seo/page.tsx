@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/button';
 
 export default function SeoGeneratorPage() {
   const [keyword, setKeyword] = useState('');
-  const [language, setLanguage] = useState<'en'>('en');
+  const [language, setLanguage] = useState<'en'|'fr'|'de'|'es'|'it'|'pt'>('en');
   const [words, setWords] = useState(1200);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,8 +45,17 @@ export default function SeoGeneratorPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium">Language</label>
-              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={language} onChange={(e) => setLanguage(e.target.value as 'en')}>
+              <select
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as typeof language)}
+              >
                 <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Português</option>
               </select>
             </div>
             <div>
