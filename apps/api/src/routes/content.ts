@@ -5,13 +5,14 @@ import { prisma } from '../db';
 import { cacheGet, cacheSet } from '../cache';
 import { ContentStatus } from '@prisma/client';
 
+const supportedLanguages = ['en','fr','de','es','it','pt'] as const;
 const AnalyzeBody = z.object({
   content: z.string().min(1),
   options: z
     .object({
       detailed_analysis: z.boolean().default(true),
       batch_processing: z.boolean().default(false),
-      language: z.string().default('en'),
+      language: z.enum(supportedLanguages).default('en'),
     })
     .default({ detailed_analysis: true, batch_processing: false, language: 'en' }),
 });
@@ -60,7 +61,7 @@ export async function contentRoutes(app: FastifyInstance) {
     },
     preHandler: [app.authenticate as any, app.authorize as any],
     handler: async (req, reply) => {
-      const Body = z.object({ title: z.string().min(1), body: z.string().min(1), language: z.string().default('en') });
+      const Body = z.object({ title: z.string().min(1), body: z.string().min(1), language: z.enum(supportedLanguages).default('en') });
       const parsed = Body.safeParse(req.body);
       if (!parsed.success) {
         return reply.code(400).send({ error: 'Invalid request', details: parsed.error.flatten() });
@@ -100,7 +101,7 @@ export async function contentRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate as any, app.authorize as any],
     handler: async (req, reply) => {
       const { id } = req.params as { id: string };
-      const Body = z.object({ title: z.string().optional(), body: z.string().optional(), language: z.string().optional(), status: z.nativeEnum(ContentStatus).optional() });
+      const Body = z.object({ title: z.string().optional(), body: z.string().optional(), language: z.enum(supportedLanguages).optional(), status: z.nativeEnum(ContentStatus).optional() });
       const parsed = Body.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Invalid request', details: parsed.error.flatten() });
       try {

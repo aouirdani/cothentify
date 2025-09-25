@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "./LocaleProvider";
 
 const LANGS = [
   { code: "en", label: "English" },
@@ -12,6 +13,7 @@ const LANGS = [
 ] as const;
 
 export default function LanguageButton() {
+  const { locale, setLocale } = useI18n();
   const [lang, setLang] = useState<string>("en");
 
   useEffect(() => {
@@ -23,17 +25,14 @@ export default function LanguageButton() {
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const code = e.target.value;
     setLang(code);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("lang", code);
-      if (typeof document !== "undefined") document.documentElement.lang = code;
-    }
+    setLocale(code as any);
   }
 
   return (
     <label className="inline-flex items-center gap-1 text-sm text-slate-600" aria-label="Choose language">
       <select
         className="inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
-        value={lang}
+        value={locale || lang}
         onChange={onChange}
       >
         {LANGS.map((l) => (

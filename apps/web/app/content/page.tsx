@@ -29,7 +29,7 @@ export default function ContentPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState<'en'|'fr'|'de'|'es'|'it'|'pt'>('en');
   const [body, setBody] = useState('');
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
@@ -106,8 +106,20 @@ export default function ContentPage() {
         <CardHeader title="Create Content" subtitle="Draft a new content piece and save it." />
         <div className="grid gap-3">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <div className="flex gap-3">
-            <Input className="w-40" placeholder="Language (e.g. en)" value={language} onChange={(e) => setLanguage(e.target.value)} />
+          <div className="flex gap-3 items-center">
+            <label className="text-sm text-slate-600">Language</label>
+            <select
+              className="w-40 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as typeof language)}
+            >
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="es">Español</option>
+              <option value="it">Italiano</option>
+              <option value="pt">Português</option>
+            </select>
           </div>
           <Textarea placeholder="Body" value={body} onChange={(e) => setBody(e.target.value)} />
           <div>

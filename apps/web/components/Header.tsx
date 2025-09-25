@@ -5,11 +5,13 @@ import { signIn, signOut, useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import LanguageButton from './LanguageButton';
+import { useI18n } from './LocaleProvider';
 import { Badge } from './ui/badge';
 import { useEffect, useState } from 'react';
 // Dark mode removed
 
 export function Header() {
+  const { t } = useI18n();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [plan, setPlan] = useState<string | null>(null);
@@ -50,9 +52,9 @@ export function Header() {
             <span className="text-gradient">Cothentify</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            <NavLink href="/dashboard" label="Dashboard" />
-            <NavLink href="/content" label="Content" />
-            <NavLink href="/pricing" label="Pricing" />
+            <NavLink href="/dashboard" label={t('nav.dashboard')} />
+            <NavLink href="/content" label={t('nav.content')} />
+            <NavLink href="/pricing" label={t('nav.pricing')} />
           </nav>
         </div>
         <div className="flex items-center gap-3" suppressHydrationWarning>
@@ -69,16 +71,16 @@ export function Header() {
                     </Link>
                   )}
                   <span className="hidden sm:inline text-sm text-slate-600">{session?.user?.email}</span>
-                  <Button variant="secondary" size="sm" onClick={() => signOut()}>Sign out</Button>
+                  <Button variant="secondary" size="sm" onClick={() => signOut()}>{t('auth.signout')}</Button>
                 </>
               ) : (
                 <>
                   <LanguageButton />
                   <Link href="/auth/login">
-                    <Button variant="secondary" size="sm">Log in</Button>
+                    <Button variant="secondary" size="sm">{t('auth.login')}</Button>
                   </Link>
                   <Link href="/auth/signup">
-                    <Button size="sm">Sign up</Button>
+                    <Button size="sm">{t('auth.signup')}</Button>
                   </Link>
                 </>
               )}
