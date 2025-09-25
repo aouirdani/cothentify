@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
-import { Card, CardHeader } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { SectionHeading } from '../../components/ui/section-heading';
 import BillingToggle from '../../components/pricing/BillingToggle';
-import { getPriceUSD, formatPrice } from '../../lib/payments';
+import { getPriceUSD } from '../../lib/payments';
 
 type Billing = 'monthly' | 'yearly';
 
@@ -55,63 +53,35 @@ export default function PricingPage({ searchParams }: { searchParams: { [k: stri
     if (p.monthly === 0) return 0;
     const map: any = { essential: 'essential', premium: 'premium', professional: 'professional' };
     const price = getPriceUSD(map[p.id] as any, billing as any);
-    // Show effective monthly for yearly by dividing by 12
     const eff = billing === 'yearly' ? (price.amount / 12) : price.amount;
     return Number(eff.toFixed(2));
   };
 
-  const billingNote = useMemo(
-    () => (billing === 'monthly' ? 'Billed monthly' : 'Billed annually (2 months free)'),
-    [billing],
-  );
-
-  async function checkout(planId: string) {
-    if (planId === 'freemium') {
-      window.location.href = '/dashboard';
-      return;
-    }
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId, billing }),
-      });
-      const json = await res.json();
-      if (json?.url) {
-        window.location.href = json.url;
-      } else {
-        toast('Redirecting to dashboard...');
-        window.location.href = '/dashboard';
-      }
-    } catch (e: any) {
-      toast.error(e?.message || 'Checkout failed');
-    }
-  }
+  const billingNote = useMemo(() => (billing === 'monthly' ? 'Billed monthly' : 'Billed annually (2 months free)'), [billing]);
 
   return (
-    <div className="py-4">
-      <SectionHeading title="Simple, transparent pricing" subtitle="Choose a plan that fits your team." />
+    <main className="container py-16">
+      <h1 className="text-4xl font-bold text-center">Ready to get started?</h1>
+      <p className="text-slate-300 text-center mt-2">Monthly / Yearly with 2 months free</p>
 
       <BillingToggle billing={billing} />
-      <div className="mb-6 text-center text-xs text-slate-600">{billingNote}</div>
+      <div className="mb-6 text-center text-xs text-slate-400">{billingNote}</div>
 
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="mt-8 grid gap-6 md:grid-cols-4">
         {plans.map((p) => (
-          <Card key={p.id} className={`${p.popular ? 'ring-1 ring-brand/40' : ''}`}>
+          <div key={p.id} className={`card p-6 ${p.popular ? 'ring-2 ring-brand/60' : ''}`}>
+            {p.popular && <div className="mb-3 inline-flex rounded-full bg-brand-gradient px-2 py-1 text-xs">Most popular</div>}
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-sm font-medium text-slate-500">{p.name}</div>
+                <div className="text-sm font-medium text-slate-300">{p.name}</div>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <div className="text-3xl font-semibold">${priceFor(p)}</div>
-                  <div className="text-sm text-slate-500">/ month</div>
+                  <div className="text-4xl font-extrabold">${priceFor(p)}</div>
+                  <div className="text-sm text-slate-400">/ month</div>
                 </div>
               </div>
-              {p.popular && (
-                <span className="rounded-full bg-brand/10 px-2 py-1 text-xs font-medium text-brand">Most popular</span>
-              )}
             </div>
-            <p className="mt-3 text-sm text-slate-600">{p.description}</p>
-            <ul className="mt-4 grid gap-2 text-sm text-slate-700">
+            <p className="mt-3 text-sm text-slate-300">{p.description}</p>
+            <ul className="mt-4 grid gap-2 text-sm text-slate-300">
               {p.features.map((f) => (
                 <li key={f} className="flex items-start gap-2">
                   <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand" />
@@ -121,38 +91,35 @@ export default function PricingPage({ searchParams }: { searchParams: { [k: stri
             </ul>
             <div className="mt-6">
               {p.monthly === 0 ? (
-                <a href="/auth/signup">
-                  <Button className="w-full" variant={p.popular ? 'primary' : 'secondary'}>Get Started</Button>
-                </a>
+                <a href="/auth/signup" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 bg-brand-gradient text-white font-medium">Get Started</a>
               ) : (
-                <a href={`/checkout/subscribe?plan=${p.id}&billing=${billing}`}>
-                  <Button className="w-full" variant={p.popular ? 'primary' : 'secondary'}>Continue</Button>
-                </a>
+                <a href={`/checkout/subscribe?plan=${p.id}&billing=${billing}`} className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-medium">Continue</a>
               )}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      <Card className="mt-8 bg-white/70">
-        <CardHeader title="Need enterprise?" subtitle="Contact us for SSO, on-prem options, and custom SLAs." />
-        <a className="text-blue-600 underline" href="#demo">Request a custom quote</a>
-      </Card>
+      <div className="card p-6 mt-8">
+        <h3 className="text-xl font-semibold">Need enterprise?</h3>
+        <p className="mt-1 text-slate-300">Contact us for SSO, on-prem options, and custom SLAs.</p>
+        <a className="text-white underline mt-2 inline-block" href="#demo">Request a custom quote</a>
+      </div>
 
-      {/* Compare plans */}
       <div className="mt-10">
-        <SectionHeading title="Compare plans" subtitle="Features by tier" />
-        <div className="overflow-hidden rounded-xl border">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+        <h2 className="text-3xl font-bold text-center">Compare plans</h2>
+        <p className="text-slate-300 text-center mt-1">Features by tier</p>
+        <div className="overflow-hidden rounded-xl card mt-6">
+          <table className="min-w-full divide-y divide-white/10">
+            <thead className="bg-transparent">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Feature</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-300">Feature</th>
                 {plans.map((p) => (
-                  <th key={p.id} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">{p.name}</th>
+                  <th key={p.id} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-300">{p.name}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white text-sm">
+            <tbody className="divide-y divide-white/10 bg-transparent text-sm text-slate-300">
               {[
                 { k: 'Analyses / month', vals: ['10', '100', '1000', 'Unlimited*'] },
                 { k: 'Ensemble detection', vals: ['—', '✓', '✓', '✓'] },
@@ -161,35 +128,34 @@ export default function PricingPage({ searchParams }: { searchParams: { [k: stri
                 { k: 'Support', vals: ['Community', 'Email', 'Priority', 'Dedicated'] },
               ].map((row) => (
                 <tr key={row.k}>
-                  <td className="px-4 py-3 font-medium text-slate-800">{row.k}</td>
+                  <td className="px-4 py-3 font-medium text-white">{row.k}</td>
                   {row.vals.map((v, i) => (
-                    <td key={i} className="px-4 py-3 text-slate-700">{v}</td>
+                    <td key={i} className="px-4 py-3">{v}</td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="mt-2 text-xs text-slate-500">* Fair use limits may apply to ensure quality of service.</div>
+        <div className="mt-2 text-xs text-slate-400">* Fair use limits may apply to ensure quality of service.</div>
       </div>
 
-      {/* FAQ */}
       <div className="mt-10">
-        <SectionHeading title="Frequently asked questions" />
-        <div className="grid gap-4 md:grid-cols-2">
+        <h2 className="text-3xl font-bold text-center">Frequently asked questions</h2>
+        <div className="grid gap-4 md:grid-cols-2 mt-6">
           {[
             { q: 'Can I change plans later?', a: 'Yes, you can upgrade or downgrade at any time. Changes take effect from your next billing cycle.' },
             { q: 'Do you offer refunds?', a: 'We offer a pro-rated refund if you cancel within 7 days of a new billing period.' },
             { q: 'Is there a free plan?', a: 'Yes — the Freemium plan lets you experiment with the detector with limited monthly analyses.' },
             { q: 'Do you support annual billing?', a: 'Yes — select Yearly for 2 months free (billed once per year).' },
           ].map((f) => (
-            <div key={f.q} className="rounded-xl border bg-white p-4">
+            <div key={f.q} className="card p-4">
               <div className="font-medium">{f.q}</div>
-              <p className="mt-1 text-sm text-slate-600">{f.a}</p>
+              <p className="mt-1 text-sm text-slate-300">{f.a}</p>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
