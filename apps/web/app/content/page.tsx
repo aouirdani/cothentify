@@ -10,7 +10,6 @@ import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { Button } from '../../components/ui/button';
 import toast from 'react-hot-toast';
-import { useI18n } from '../../components/LocaleProvider';
 
 type ContentListItem = {
   id: string;
@@ -21,7 +20,6 @@ type ContentListItem = {
 };
 
 export default function ContentPage() {
-  const { t } = useI18n();
   const { status } = useSession();
   const [items, setItems] = useState<ContentListItem[]>([]);
   const [page, setPage] = useState(1);
@@ -105,29 +103,12 @@ export default function ContentPage() {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader title={t('content.createTitle')} subtitle="Draft a new content piece and save it." />
+        <CardHeader title="Create Content" subtitle="Draft a new content piece and save it." />
         <div className="grid gap-3">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <div className="flex gap-3 items-center">
-            <label className="text-sm text-slate-600">{t('content.language')}</label>
-            <select
-              className="w-40 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as typeof language)}
-            >
-              <option value="en">English</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="es">Español</option>
-              <option value="it">Italiano</option>
-              <option value="pt">Português</option>
-            </select>
-          </div>
-          <Textarea placeholder={t('content.body')} value={body} onChange={(e) => setBody(e.target.value)} />
+          <Textarea placeholder="Body" value={body} onChange={(e) => setBody(e.target.value)} />
           <div>
-            <Button disabled={!title.trim() || !body.trim() || loading} onClick={createItem}>
-              {loading ? 'Saving...' : t('content.createBtn')}
-            </Button>
+            <Button disabled={!title.trim() || !body.trim() || loading} onClick={createItem}> {loading ? 'Saving...' : 'Create'} </Button>
           </div>
           {error && <div className="text-sm text-red-600">{error}</div>}
         </div>
@@ -135,8 +116,8 @@ export default function ContentPage() {
 
       <Card>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t('content.contentList')}</h2>
-          <div className="text-sm text-slate-600">{t('content.pageOf').replace('{{page}}', String(page)).replace('{{total}}', String(totalPages))}</div>
+          <h2 className="text-lg font-semibold">Content</h2>
+          <div className="text-sm text-slate-600">Page {page} of {totalPages}</div>
         </div>
         {isLoading ? (
           <TableSkeleton rows={6} />
@@ -164,7 +145,7 @@ export default function ContentPage() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-slate-600" colSpan={4}>{t('content.noContent')}</td>
+                  <td className="px-4 py-6 text-center text-sm text-slate-600" colSpan={4}>No content yet.</td>
                 </tr>
               )}
             </tbody>
@@ -174,8 +155,8 @@ export default function ContentPage() {
         <div className="mt-4 flex items-center justify-between">
           <div className="text-sm text-slate-600">Total: {total}</div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => { setPage((p) => Math.max(1, p - 1)); }}>{t('content.prev')}</Button>
-            <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => { setPage((p) => p + 1); }}>{t('content.next')}</Button>
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => { setPage((p) => Math.max(1, p - 1)); }}>Prev</Button>
+            <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => { setPage((p) => p + 1); }}>Next</Button>
           </div>
         </div>
       </Card>

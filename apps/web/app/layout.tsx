@@ -5,7 +5,6 @@ import { Header } from '../components/Header';
 import Footer from '../components/Footer';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 // Dark mode removed
-import { LocaleProvider } from '../components/LocaleProvider';
 
 export const metadata = {
   title: 'Cothentify',
@@ -31,14 +30,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={`min-h-screen antialiased font-sans ${plusJakarta.variable}`}>
         <Providers>
-          <LocaleProvider>
-            <Header />
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-grid opacity-40"></div>
-              <div className="container pb-16">{children}</div>
-            </div>
-            <Footer />
-          </LocaleProvider>
+          <Header />
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-grid opacity-40"></div>
+            <div className="container pb-16">{children}</div>
+          </div>
+          <Footer />
         </Providers>
       </body>
     </html>

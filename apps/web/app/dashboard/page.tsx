@@ -12,10 +12,8 @@ import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 import useSWR from 'swr';
 import { Skeleton } from '../../components/ui/skeleton';
-import { useI18n } from '../../components/LocaleProvider';
 
 export default function DashboardPage() {
-  const { t } = useI18n();
   const { data: session, status } = useSession();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,7 +98,7 @@ export default function DashboardPage() {
               </div>
             </>
           ) : (
-            <Button variant="secondary" size="sm" onClick={() => signIn()}>{t('auth.signin')}</Button>
+            <Button variant="secondary" size="sm" onClick={() => signIn()}>Sign in</Button>
           )}
         </div>
         <Textarea rows={10} placeholder="Paste content to analyze..." value={text} onChange={(e) => setText(e.target.value)} />
