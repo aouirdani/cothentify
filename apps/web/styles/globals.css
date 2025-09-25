@@ -38,3 +38,19 @@ code {
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
 }
+
+:root { --bg:#0B1020; --card:#0F172A; }
+html,body{ background:var(--bg); color:white; }
+.container{ @apply mx-auto max-w-7xl px-4; }
+
+/* Cards */
+.card{ @apply rounded-2xl bg-[color:var(--card)] border border-white/10 shadow-soft; }
+
+/* Gradient rings */
+.gradient-ring{ @apply relative overflow-hidden; }
+.gradient-ring::before{
+  content:'';
+  position:absolute; inset:-1px;
+  background: conic-gradient(from 180deg at 50% 50%, rgba(124,58,237,.35), rgba(26,86,219,.35), transparent 60%);
+  filter: blur(12px); opacity:.6; pointer-events:none;
+}

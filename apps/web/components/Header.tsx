@@ -1,86 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { signIn, signOut, useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { useEffect, useState } from 'react';
-// Dark mode removed
 
 export function Header() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const [plan, setPlan] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-
+  const [plan, setPlan] = useState<string | null>(null);
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    async function loadPlan() {
-      if (status !== 'authenticated') { setPlan(null); return; }
+    if (status !== 'authenticated') { setPlan(null); return; }
+    const ac = new AbortController();
+    (async () => {
       try {
-        const res = await fetch('/api/proxy/api/v1/me');
-        if (res.ok) {
-          const json = await res.json();
-          setPlan(json?.plan || null);
-        }
+        const res = await fetch('/api/proxy/api/v1/me', { signal: ac.signal, cache: 'no-store' });
+        if (res.ok) { const j = await res.json(); setPlan(j?.plan ?? null); }
       } catch {}
-    }
-    loadPlan();
+    })();
+    return () => ac.abort();
   }, [status]);
 
-  const NavLink = ({ href, label }: { href: string; label: string }) => (
-    <Link
-      href={href}
-      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-100 ${pathname === href ? 'text-slate-900' : 'text-slate-600'}`}
-    >
-      {label}
-    </Link>
-  );
+  const nav = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/content', label: 'Content' },
+    { href: '/seo', label: 'SEO' },
+    { href: '/pricing', label: 'Pricing' },
+  ];
+  const isActive = (h: string) => pathname === h || (h !== '/' && pathname?.startsWith(h));
 
   return (
-    <header className="mb-8 rounded-xl border bg-white/90 backdrop-blur shadow-soft">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-base font-semibold tracking-tight text-slate-900">
-            <span className="text-gradient">Cothentify</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-1">
-            <NavLink href="/dashboard" label="Dashboard" />
-            <NavLink href="/content" label="Content" />
-            <NavLink href="/seo" label="SEO" />
-            <NavLink href="/pricing" label="Pricing" />
-          </nav>
-        </div>
-        <div className="flex items-center gap-3" suppressHydrationWarning>
-          {!mounted ? (
-            <div className="h-8 w-40" />
+    <header className="sticky top-0 z-50 mb-8 border-b border-white/10 bg-black/30 backdrop-blur">
+      <div className="container flex h-14 items-center justify-between">
+        <Link href="/" className="text-base font-semibold tracking-tight">
+          <span className="bg-brand-gradient bg-clip-text text-transparent">Cothentify</span>
+        </Link>
+        <nav className="hidden md:flex items-center gap-1">
+          {nav.map(n => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={`px-3 py-2 text-sm text-slate-300 hover:text-white relative ${isActive(n.href) ? 'text-white' : ''}`}
+              aria-current={isActive(n.href) ? 'page' : undefined}
+            >
+              {n.label}
+              {isActive(n.href) && <span className="absolute left-3 right-3 -bottom-[1px] h-[2px] bg-brand-gradient rounded-full" />}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center gap-3">
+          {mounted && status === 'authenticated' ? (
+            <>
+              {plan && (
+                <Link href="/pricing" className="hover:opacity-80">
+                  <Badge className="uppercase tracking-wide bg-white/10 text-white">{plan}</Badge>
+                </Link>
+              )}
+              <Button variant="secondary" size="sm" onClick={() => signOut()}>Sign out</Button>
+            </>
           ) : (
             <>
-              {/* Theme toggle removed */}
-              {status === 'authenticated' ? (
-                <>
-                  {plan && (
-                    <Link href="/pricing" className="hover:opacity-80">
-                      <Badge color="blue">{plan}</Badge>
-                    </Link>
-                  )}
-                  <span className="hidden sm:inline text-sm text-slate-600">{session?.user?.email}</span>
-                  <Button variant="secondary" size="sm" onClick={() => signOut()}>Sign out</Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/auth/login">
-                    <Button variant="secondary" size="sm">Log in</Button>
-                  </Link>
-                  <Link href="/auth/signup">
-                    <Button size="sm">Sign up</Button>
-                  </Link>
-                </>
-              )}
+              <Link href="/auth/login"><Button variant="secondary" size="sm">Log in</Button></Link>
+              <Link href="/auth/signup"><Button size="sm" className="bg-brand-gradient">Sign up</Button></Link>
             </>
           )}
         </div>

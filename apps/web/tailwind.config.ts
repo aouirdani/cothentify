@@ -1,38 +1,24 @@
 import type { Config } from 'tailwindcss';
-
-export default {
-  darkMode: 'class',
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+const config: Config = {
+  darkMode: ['class'],
+  content: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-      },
       colors: {
         brand: {
-          DEFAULT: '#0ea5a8',
-          dark: '#0f766e',
-          light: '#5eead4',
+          DEFAULT: '#1A56DB',
+          600: '#1E3A8A',
         },
-        accent: {
-          DEFAULT: '#22d3ee',
-          soft: '#a5f3fc'
-        }
       },
       boxShadow: {
-        soft: '0 1px 2px rgba(16,24,40,0.06), 0 1px 3px rgba(16,24,40,0.10)',
+        soft: '0 10px 40px rgba(0,0,0,.25)',
       },
-      borderRadius: {
-        xl: '0.75rem',
-      },
-      container: {
-        center: true,
-        padding: '1rem',
-        screens: {
-          '2xl': '1280px',
-        },
+      backgroundImage: {
+        'brand-gradient': 'linear-gradient(135deg,#1A56DB 0%,#7C3AED 100%)',
+        'brand-radial': 'radial-gradient(80% 80% at 70% 10%, rgba(124,58,237,.35), rgba(26,86,219,.15) 70%, transparent)',
       },
     },
   },
   plugins: [],
-} satisfies Config;
+};
+export default config;
