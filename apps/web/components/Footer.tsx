@@ -1,3 +1,4 @@
+"use client";
 import { useI18n } from './LocaleProvider';
 
 export default function Footer() {
@@ -21,4 +22,3 @@ export default function Footer() {
     </footer>
   );
 }
-"use client";
