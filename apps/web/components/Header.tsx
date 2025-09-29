@@ -31,6 +31,7 @@ export function Header() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/content', label: 'Content' },
     { href: '/seo', label: 'SEO' },
+    { href: '/ai-text-detection', label: 'AI Detection' },
     { href: '/pricing', label: 'Pricing' },
   ] as const;
   const isActive = (h: string) => pathname === h || (h !== '/' && pathname?.startsWith(h));
