@@ -69,3 +69,6 @@ jobs:
       - name: Build Web
         run: pnpm -C apps/web build
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
