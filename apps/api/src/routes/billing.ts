@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { PlanTier, BillingCycle } from '@prisma/client';
 import { prisma } from '../db';
 import { upsertSubscriptionStatus } from '../repos/subscriptions';
 import { env } from '../env';
 
-const Body = z.object({ plan: z.enum(['FREEMIUM', 'ESSENTIAL', 'PREMIUM', 'PROFESSIONAL']) });
+const PlanBody = z.object({ plan: z.nativeEnum(PlanTier) });
 
 export async function billingRoutes(app: FastifyInstance) {
   // Activate or change current user's plan
@@ -13,16 +14,16 @@ export async function billingRoutes(app: FastifyInstance) {
       summary: 'Activate or change the current user plan',
       security: [{ bearerAuth: [] }],
     },
-    preHandler: app.authenticate as any,
+    preHandler: app.authenticate,
     handler: async (req, reply) => {
-      const parsed = Body.safeParse(req.body);
+      const parsed = PlanBody.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Invalid body', details: parsed.error.flatten() });
-      const email = (req.user as any)?.email as string | undefined;
+      const email = req.user?.email;
       if (!email) return reply.code(400).send({ error: 'Missing user email' });
       const user = await prisma.user.upsert({
         where: { email },
-        update: { plan: parsed.data.plan as any },
-        create: { email, plan: parsed.data.plan as any },
+        update: { plan: parsed.data.plan },
+        create: { email, plan: parsed.data.plan },
       });
       return { ok: true, plan: user.plan };
     },
@@ -36,16 +37,16 @@ export async function billingRoutes(app: FastifyInstance) {
       if (!env.SERVICE_WEBHOOK_TOKEN || token !== env.SERVICE_WEBHOOK_TOKEN) {
         return reply.code(401).send({ error: 'Unauthorized' });
       }
-      const Body2 = z.object({ email: z.string().email(), plan: z.enum(['FREEMIUM', 'ESSENTIAL', 'PREMIUM', 'PROFESSIONAL']) });
-      const parsed = Body2.safeParse(req.body);
+      const WebhookBody = z.object({ email: z.string().email(), plan: z.nativeEnum(PlanTier) });
+      const parsed = WebhookBody.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Invalid body', details: parsed.error.flatten() });
       const user = await prisma.user.upsert({
         where: { email: parsed.data.email },
-        update: { plan: parsed.data.plan as any },
-        create: { email: parsed.data.email, plan: parsed.data.plan as any },
+        update: { plan: parsed.data.plan },
+        create: { email: parsed.data.email, plan: parsed.data.plan },
       });
       return { ok: true, plan: user.plan };
-    }
+    },
   });
 
   // Upsert subscription/order status via service token (used by Stripe/PayPal webhooks from web app)
@@ -61,14 +62,14 @@ export async function billingRoutes(app: FastifyInstance) {
         externalId: z.string().min(2),
         status: z.enum(['incomplete', 'active', 'trialing', 'past_due', 'canceled', 'unpaid', 'paused']),
         email: z.string().email().optional(),
-        plan: z.enum(['FREEMIUM', 'ESSENTIAL', 'PREMIUM', 'PROFESSIONAL']).optional(),
-        billing: z.enum(['MONTHLY', 'YEARLY']).optional(),
+        plan: z.nativeEnum(PlanTier).optional(),
+        billing: z.nativeEnum(BillingCycle).optional(),
         meta: z.record(z.any()).optional(),
       });
       const parsed = Body.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Invalid body', details: parsed.error.flatten() });
 
-      const { provider, externalId, status, email, plan, billing, meta } = parsed.data as any;
+      const { provider, externalId, status, email, plan, billing, meta } = parsed.data;
       try {
         await upsertSubscriptionStatus(prisma, {
           provider,
@@ -81,8 +82,8 @@ export async function billingRoutes(app: FastifyInstance) {
         });
 
         return { ok: true };
-      } catch (e) {
-        app.log.error(e);
+      } catch (error) {
+        app.log.error(error);
         return reply.code(500).send({ error: 'DB error' });
       }
     },

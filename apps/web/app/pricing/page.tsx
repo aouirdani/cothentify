@@ -1,12 +1,9 @@
 import { useMemo } from 'react';
-import { Button } from '../../components/ui/button';
 import BillingToggle from '../../components/pricing/BillingToggle';
-import { getPriceUSD } from '../../lib/payments';
-
-type Billing = 'monthly' | 'yearly';
+import { getPriceUSD, type Billing, type PlanKey } from '../../lib/payments';
 
 type Plan = {
-  id: string;
+  id: 'freemium' | PlanKey;
   name: string;
   monthly: number; // base monthly price
   description: string;
@@ -47,13 +44,14 @@ const plans: Plan[] = [
 ];
 
 export default function PricingPage({ searchParams }: { searchParams: { [k: string]: string | string[] | undefined } }) {
-  const billing = (Array.isArray(searchParams?.billing) ? searchParams?.billing[0] : searchParams?.billing) === 'yearly' ? 'yearly' : 'monthly';
+  const billingValue = searchParams?.['billing'];
+  const billingParam = Array.isArray(billingValue) ? billingValue[0] : billingValue;
+  const billing: Billing = billingParam === 'yearly' ? 'yearly' : 'monthly';
 
-  const priceFor = (p: Plan) => {
-    if (p.monthly === 0) return 0;
-    const map: any = { essential: 'essential', premium: 'premium', professional: 'professional' };
-    const price = getPriceUSD(map[p.id] as any, billing as any);
-    const eff = billing === 'yearly' ? (price.amount / 12) : price.amount;
+  const priceFor = (planConfig: Plan) => {
+    if (planConfig.id === 'freemium') return 0;
+    const price = getPriceUSD(planConfig.id, billing);
+    const eff = billing === 'yearly' ? price.amount / 12 : price.amount;
     return Number(eff.toFixed(2));
   };
 

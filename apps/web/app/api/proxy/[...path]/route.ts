@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../lib/auth';
 import { SignJWT } from 'jose';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const API_JWT_SECRET = (process.env.API_JWT_SECRET || process.env.JWT_SECRET || '').trim();
+const API_BASE = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000';
+const API_JWT_SECRET = (process.env['API_JWT_SECRET'] || process.env['JWT_SECRET'] || '').trim();
 
 async function signApiJwt(payload: Record<string, unknown>) {
   if (!API_JWT_SECRET) throw new Error('API_JWT_SECRET or JWT_SECRET not set');
@@ -45,7 +45,7 @@ async function handleProxy(req: NextRequest, { path }: { path: string[] }) {
 
   // If the user is signed in, sign a JWT and attach Authorization.
   if (session?.user?.email) {
-    const role = (session as any).role || 'MEMBER';
+    const role = session.role ?? 'MEMBER';
     const token = await signApiJwt({ sub: session.user.email, email: session.user.email, role });
     headers.set('authorization', `Bearer ${token}`);
   } else {

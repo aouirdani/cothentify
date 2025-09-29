@@ -36,9 +36,13 @@ export default function SeoGeneratorPage() {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let full = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        let done = false;
+        while (!done) {
+          const { done: doneReading, value } = await reader.read();
+          done = doneReading ?? false;
+          if (value === undefined) {
+            continue;
+          }
           const chunk = decoder.decode(value);
           full += chunk;
           setContent((prev) => prev + chunk);
@@ -51,11 +55,12 @@ export default function SeoGeneratorPage() {
           body: JSON.stringify({ keyword, language, words }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || 'Generation failed');
-        setContent(json.content || '');
+        if (!res.ok) throw new Error((json?.error as string | undefined) || 'Generation failed');
+        setContent((json?.content as string | undefined) || '');
       }
-    } catch (e: any) {
-      setError(e?.message || 'Generation failed');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Generation failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +72,9 @@ export default function SeoGeneratorPage() {
     let title = 'Generated Article';
     let start = 0;
     for (let i = 0; i < lines.length; i++) {
-      const l = lines[i].trim();
+      const currentLine = lines[i];
+      if (!currentLine) continue;
+      const l = currentLine.trim();
       if (l.startsWith('# ')) { title = l.replace(/^#\s+/, '').trim() || title; start = i + 1; break; }
     }
     const body = lines.slice(start).join('\n').trim();
@@ -79,8 +86,9 @@ export default function SeoGeneratorPage() {
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success('Saved to Content');
-    } catch (e: any) {
-      toast.error(e?.message || 'Save failed');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Save failed';
+      toast.error(message);
     }
   }
 

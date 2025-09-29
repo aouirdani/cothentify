@@ -58,8 +58,9 @@ export async function authRoutes(app: FastifyInstance) {
           select: { id: true, email: true, name: true },
         });
         return { ok: true, user };
-      } catch (e: any) {
-        return reply.code(500).send({ error: String(e?.message || e) });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return reply.code(500).send({ error: message });
       }
     },
   });

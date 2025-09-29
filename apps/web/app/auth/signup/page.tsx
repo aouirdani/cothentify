@@ -24,8 +24,9 @@ export default function SignupPage() {
       if (!res.ok) throw new Error('Registration failed');
       toast.success('Account created. Please sign in.');
       router.push('/auth/login');
-    } catch (e: any) {
-      toast.error(e?.message || 'Registration failed');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Registration failed';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -35,14 +35,14 @@ export async function analyzeContent(content: string, options: AnalysisOptions):
   const pattern_matches: string[] = [];
   const linguistic_markers: string[] = [];
 
-  const providers = [openai as any, anthropic as any, hf as any];
-  for (const p of providers) {
-    if (p?.ok && typeof p.ai_probability === 'number') {
-      scores.push(p.ai_probability);
-      p.detected_models?.forEach((m: string) => models.add(m));
-      sentence_scores.push(...(p.analysis_details?.sentence_scores ?? []));
-      pattern_matches.push(...(p.analysis_details?.pattern_matches ?? []));
-      linguistic_markers.push(...(p.analysis_details?.linguistic_markers ?? []));
+  const providers = [openai, anthropic, hf] as const;
+  for (const provider of providers) {
+    if (isSuccessful(provider)) {
+      scores.push(provider.ai_probability);
+      provider.detected_models?.forEach((model) => models.add(model));
+      sentence_scores.push(...(provider.analysis_details?.sentence_scores ?? []));
+      pattern_matches.push(...(provider.analysis_details?.pattern_matches ?? []));
+      linguistic_markers.push(...(provider.analysis_details?.linguistic_markers ?? []));
     }
   }
 
@@ -65,4 +65,25 @@ export async function analyzeContent(content: string, options: AnalysisOptions):
       linguistic_markers: linguistic_markers.slice(0, 20),
     },
   };
+}
+
+type ProviderSuccess = {
+  ok: true;
+  ai_probability: number;
+  detected_models?: string[];
+  analysis_details?: {
+    sentence_scores?: Array<{ index: number; score: number }>;
+    pattern_matches?: string[];
+    linguistic_markers?: string[];
+  };
+};
+
+function isSuccessful(result: unknown): result is ProviderSuccess {
+  return (
+    typeof result === 'object' &&
+    result !== null &&
+    'ok' in result &&
+    (result as { ok?: unknown }).ok === true &&
+    typeof (result as { ai_probability?: unknown }).ai_probability === 'number'
+  );
 }

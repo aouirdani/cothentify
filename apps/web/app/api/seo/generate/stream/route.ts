@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 type Provider = 'deepinfra' | 'together' | 'groq' | 'openai' | 'custom' | 'ollama';
 
@@ -22,11 +23,22 @@ function getConfig() {
   return { provider, base, apiKey, model } as const;
 }
 
+const BodySchema = z.object({
+  keyword: z.string().min(1),
+  language: z.string().optional(),
+  words: z.union([z.number(), z.string()]).optional(),
+});
+
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const keyword = String(body?.keyword || '').trim();
-  const language = String(body?.language || 'en').toLowerCase();
-  const words = Math.max(600, Math.min(2000, Number(body?.words || 1200)));
+  const parsed = BodySchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return new Response('Invalid body', { status: 400 });
+  }
+  const keyword = parsed.data.keyword.trim();
+  const language = (parsed.data.language ?? 'en').toLowerCase();
+  const wordsRaw = parsed.data.words;
+  const wordsValue = typeof wordsRaw === 'string' ? Number(wordsRaw) : wordsRaw;
+  const words = Math.max(600, Math.min(2000, Number.isFinite(wordsValue) ? Number(wordsValue) : 1200));
   if (!keyword) return new Response('Missing keyword', { status: 400 });
 
   const { provider, base, apiKey, model } = getConfig();
@@ -76,7 +88,7 @@ Goal: Generate an SEO-ready, human-sounding article with the above structure.`;
       start(controller) {
         const reader = upstream.body!.getReader();
         let buffer = '';
-        const pump = (): any =>
+        const pump = (): Promise<void> =>
           reader
             .read()
             .then(({ done, value }) => {
@@ -100,7 +112,7 @@ Goal: Generate an SEO-ready, human-sounding article with the above structure.`;
               }
               return pump();
             })
-            .catch((e) => controller.error(e));
+            .catch((error) => controller.error(error));
         return pump();
       },
     });
@@ -145,7 +157,7 @@ Goal: Generate an SEO-ready, human-sounding article with the above structure.`;
     start(controller) {
       const reader = upstream.body!.getReader();
       let buffer = '';
-      const pump = (): any =>
+      const pump = (): Promise<void> =>
         reader
           .read()
           .then(({ done, value }) => {
@@ -174,7 +186,7 @@ Goal: Generate an SEO-ready, human-sounding article with the above structure.`;
             }
             return pump();
           })
-          .catch((e) => controller.error(e));
+          .catch((error) => controller.error(error));
       return pump();
     },
   });

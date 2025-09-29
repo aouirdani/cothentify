@@ -8,7 +8,7 @@ export default function BillingToggle({ billing }: { billing: 'monthly' | 'yearl
   const params = useSearchParams();
 
   function setBilling(next: 'monthly' | 'yearly') {
-    const usp = new URLSearchParams(params as any);
+    const usp = new URLSearchParams(params.toString());
     usp.set('billing', next);
     router.replace(`/pricing?${usp.toString()}`, { scroll: false });
   }
@@ -20,4 +20,3 @@ export default function BillingToggle({ billing }: { billing: 'monthly' | 'yearl
     </div>
   );
 }
-

@@ -13,17 +13,40 @@ import { useEffect } from 'react';
 import useSWR from 'swr';
 import { Skeleton } from '../../components/ui/skeleton';
 
+type AnalysisResponse = {
+  ai_probability: number;
+  confidence_score: number;
+  detected_models?: string[];
+  analysis_details?: {
+    pattern_matches?: string[];
+    linguistic_markers?: string[];
+  };
+  processing_time?: number;
+};
+
+type MeResponse = {
+  plan?: string | null;
+  subscription?: {
+    status?: string | null;
+    billingCycle?: string | null;
+    currentPeriodEnd?: string | null;
+  } | null;
+};
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const hfEnabled = (process.env.NEXT_PUBLIC_ENABLE_HF_DETECTOR || 'false') === 'true';
-  const fetcher = (u: string) => fetch(u).then(r => r.json());
-  const { data: me, isLoading: meLoading, mutate: mutateMe } = useSWR(status === 'authenticated' ? '/api/proxy/api/v1/me' : null, fetcher);
-  const plan = me?.plan || null;
-  const subInfo = me?.subscription || null;
+  const hfEnabled = (process.env['NEXT_PUBLIC_ENABLE_HF_DETECTOR'] || 'false') === 'true';
+  const fetcher = <T,>(url: string) => fetch(url).then((r) => r.json() as Promise<T>);
+  const { data: me, isLoading: meLoading, mutate: mutateMe } = useSWR<MeResponse>(
+    status === 'authenticated' ? '/api/proxy/api/v1/me' : null,
+    fetcher,
+  );
+  const plan = me?.plan ?? null;
+  const subInfo = me?.subscription ?? null;
 
   async function downgrade() {
     try {
@@ -50,11 +73,11 @@ export default function DashboardPage() {
         body: JSON.stringify({ content: text, options: { detailed_analysis: true, language: 'en' } }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      const json = (await res.json()) as AnalysisResponse;
       setResult(json);
       toast.success('Analysis completed');
-    } catch (e: any) {
-      const msg = e?.message || 'Request failed';
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Request failed';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -183,13 +206,15 @@ function UsageCard() {
       try {
         const res1 = await fetch('/api/proxy/api/v1/stats/usage');
         if (!res1.ok) throw new Error('Failed to load usage');
-        const json1 = await res1.json();
+        const json1 = (await res1.json()) as { analysesThisMonth: number; analysesTotal: number };
         setData(json1);
         const res2 = await fetch('/api/proxy/api/v1/me');
-        const json2 = await res2.json();
-        setPlan(json2?.plan || null);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load');
+        if (!res2.ok) throw new Error('Failed to load profile');
+        const json2 = (await res2.json()) as MeResponse;
+        setPlan(json2?.plan ?? null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to load';
+        setError(message);
       } finally {
         setLoading(false);
       }

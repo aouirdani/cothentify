@@ -1,16 +1,16 @@
-import { PrismaClient, PlanTier, SubscriptionStatus } from '@prisma/client';
+import { PrismaClient, PlanTier, SubscriptionStatus, BillingCycle, Prisma } from '@prisma/client';
 
 export type Provider = 'stripe' | 'paypal';
 export type Status = 'incomplete' | 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
-export type Billing = 'MONTHLY' | 'YEARLY' | null | undefined;
+export type Billing = BillingCycle | null | undefined;
 
 export interface UpsertStatusArgs {
   provider: Provider;
   externalId: string; // Stripe subscription ID or PayPal order/subscription ID
   status: Status;
   email?: string;
-  plan?: keyof typeof PlanTier; // 'FREEMIUM' | 'ESSENTIAL' | 'PREMIUM' | 'PROFESSIONAL'
-  billing?: Billing; // Prisma BillingCycle enum shape
+  plan?: PlanTier;
+  billing?: Billing;
   meta?: Record<string, unknown>;
 }
 
@@ -20,6 +20,9 @@ export async function upsertSubscriptionStatus(prisma: PrismaClient, args: Upser
   const { externalId, status, email, plan, billing, meta } = args;
 
   const billingCycle = billing ?? null;
+  const metaValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+    meta ? (meta as Prisma.InputJsonValue) : Prisma.JsonNull;
+  const planValue: PlanTier = plan ?? PlanTier.FREEMIUM;
 
   const toPrismaStatus = (s: Status): SubscriptionStatus => {
     switch (s) {
@@ -44,24 +47,24 @@ export async function upsertSubscriptionStatus(prisma: PrismaClient, args: Upser
     where: { stripeSubscriptionId: externalId },
     update: {
       status: toPrismaStatus(status),
-      billingCycle: billingCycle as any,
-      meta: meta as any,
+      billingCycle,
+      meta: metaValue,
     },
     create: {
       email: email || 'unknown@example.com',
-      plan: (plan || 'FREEMIUM') as any,
+      plan: planValue,
       status: toPrismaStatus(status),
-      billingCycle: billingCycle as any,
+      billingCycle,
       stripeSubscriptionId: externalId,
-      meta: meta as any,
+      meta: metaValue,
     },
   });
 
   if (email && plan && (status === 'active' || status === 'trialing')) {
     await prisma.user.upsert({
       where: { email },
-      update: { plan: plan as any },
-      create: { email, plan: plan as any },
+      update: { plan },
+      create: { email, plan },
     });
   }
 }

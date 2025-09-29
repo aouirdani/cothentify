@@ -17,6 +17,21 @@ const AnalyzeBody = z.object({
     .default({ detailed_analysis: true, batch_processing: false, language: 'en' }),
 });
 
+type ContentListItem = {
+  id: string;
+  title: string;
+  language: string;
+  status: ContentStatus;
+  createdAt: Date;
+};
+
+type ContentListPayload = {
+  items: ContentListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 export async function contentRoutes(app: FastifyInstance) {
   // List content pieces (paginated)
   app.get('/', {
@@ -31,12 +46,12 @@ export async function contentRoutes(app: FastifyInstance) {
         },
       },
     },
-    preHandler: app.authenticate as any,
+    preHandler: app.authenticate,
     handler: async (req) => {
       const { page = 1, pageSize = 10 } = req.query as { page?: number; pageSize?: number };
       const skip = (page - 1) * pageSize;
       const cacheKey = `content:list:${page}:${pageSize}`;
-      const cached = await cacheGet<{ items: any[]; total: number; page: number; pageSize: number }>(cacheKey);
+      const cached = await cacheGet<ContentListPayload>(cacheKey);
       if (cached) return cached;
       const [items, total] = await Promise.all([
         prisma.contentPiece.findMany({
@@ -47,7 +62,7 @@ export async function contentRoutes(app: FastifyInstance) {
         }),
         prisma.contentPiece.count(),
       ]);
-      const payload = { items, total, page, pageSize };
+      const payload: ContentListPayload = { items, total, page, pageSize };
       await cacheSet(cacheKey, payload, 30);
       return payload;
     },
@@ -59,7 +74,7 @@ export async function contentRoutes(app: FastifyInstance) {
       summary: 'Create a content piece',
       security: [{ bearerAuth: [] }],
     },
-    preHandler: [app.authenticate as any, app.authorize as any],
+    preHandler: [app.authenticate, app.authorize],
     handler: async (req, reply) => {
       const Body = z.object({ title: z.string().min(1), body: z.string().min(1), language: z.enum(supportedLanguages).default('en') });
       const parsed = Body.safeParse(req.body);
@@ -68,7 +83,7 @@ export async function contentRoutes(app: FastifyInstance) {
       }
       // Attach author when available
       let authorId: string | undefined = undefined;
-      const email = (req.user as any)?.email as string | undefined;
+      const email = req.user?.email;
       if (email) {
         const user = await prisma.user.upsert({ where: { email }, update: {}, create: { email } });
         authorId = user.id;
@@ -98,7 +113,7 @@ export async function contentRoutes(app: FastifyInstance) {
   // Update
   app.put('/:id', {
     schema: { summary: 'Update a content piece' },
-    preHandler: [app.authenticate as any, app.authorize as any],
+    preHandler: [app.authenticate, app.authorize],
     handler: async (req, reply) => {
       const { id } = req.params as { id: string };
       const Body = z.object({ title: z.string().optional(), body: z.string().optional(), language: z.enum(supportedLanguages).optional(), status: z.nativeEnum(ContentStatus).optional() });
@@ -149,7 +164,7 @@ export async function contentRoutes(app: FastifyInstance) {
   // Enqueue analysis for a stored content piece
   app.post('/:id/analyze', {
     schema: { summary: 'Enqueue analysis for existing content' },
-    preHandler: app.authenticate as any,
+    preHandler: app.authenticate,
     handler: async (req, reply) => {
       const { id } = req.params as { id: string };
       const piece = await prisma.contentPiece.findUnique({ where: { id }, select: { id: true } });

@@ -5,9 +5,9 @@ import { cacheGet, cacheSet } from '../cache';
 export async function statsRoutes(app: FastifyInstance) {
   app.get('/usage', {
     schema: { summary: 'Get usage counts', security: [{ bearerAuth: [] }] },
-    preHandler: app.authenticate as any,
+    preHandler: app.authenticate,
     handler: async (req) => {
-      const email = (req.user as any)?.email as string | undefined;
+      const email = req.user?.email;
       if (!email) return { analysesThisMonth: 0, analysesTotal: 0 };
       const user = await prisma.user.upsert({ where: { email }, update: {}, create: { email } });
       const start = new Date();

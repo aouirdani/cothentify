@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,11 +27,22 @@ function getApiConfig() {
   return { base, apiKey, model };
 }
 
+const BodySchema = z.object({
+  keyword: z.string().min(1),
+  language: z.string().optional(),
+  words: z.union([z.number(), z.string()]).optional(),
+});
+
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const keyword = String(body?.keyword || '').trim();
-  const language = String(body?.language || 'en').toLowerCase();
-  const targetWords = Math.max(600, Math.min(2000, Number(body?.words || 1200)));
+  const parsed = BodySchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid body', details: parsed.error.flatten() }, { status: 400 });
+  }
+  const keyword = parsed.data.keyword.trim();
+  const language = (parsed.data.language ?? 'en').toLowerCase();
+  const wordsRaw = parsed.data.words;
+  const wordsNumber = typeof wordsRaw === 'string' ? Number(wordsRaw) : wordsRaw;
+  const targetWords = Math.max(600, Math.min(2000, Number.isFinite(wordsNumber) ? Number(wordsNumber) : 1200));
   if (!keyword) return NextResponse.json({ error: 'Missing keyword' }, { status: 400 });
   if (!LANGS.includes(language as Lang)) {
     return NextResponse.json({ error: 'Invalid language', allowed: LANGS }, { status: 400 });
@@ -109,7 +121,8 @@ Hard requirements:
       const content = json?.choices?.[0]?.message?.content || '';
       return NextResponse.json({ content, model });
     }
-  } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

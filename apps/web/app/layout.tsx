@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <link
           rel="preconnect"
-          href={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}
+          href={process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000'}
           crossOrigin="anonymous"
         />
         <link rel="preconnect" href="https://api.stripe.com" crossOrigin="anonymous" />

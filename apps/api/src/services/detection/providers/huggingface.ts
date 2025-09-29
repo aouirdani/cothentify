@@ -56,12 +56,16 @@ export async function runHFAnalysis(content: string, _options: unknown): Promise
     // Case (b): classification array
     // Example HF output: [{label: 'AI', score: 0.82}, {label: 'Human', score: 0.18}]
     if (Array.isArray(data)) {
-      const flat = data.flat();
+      const flat = (data as Array<unknown>).flat();
       let aiScore: number | undefined;
       for (const item of flat) {
-        const label = String(item?.label || '').toLowerCase();
+        if (!item || typeof item !== 'object') continue;
+        const labelValue = (item as { label?: unknown }).label;
+        const label = typeof labelValue === 'string' ? labelValue.toLowerCase() : '';
         if (label.includes('ai') || label.includes('gpt')) {
-          aiScore = Number(item?.score);
+          const scoreValue = (item as { score?: unknown }).score;
+          const numericScore = typeof scoreValue === 'number' ? scoreValue : Number(scoreValue);
+          aiScore = Number.isFinite(numericScore) ? numericScore : undefined;
           break;
         }
       }
@@ -84,8 +88,9 @@ export async function runHFAnalysis(content: string, _options: unknown): Promise
       detected_models: [],
       analysis_details: { sentence_scores: [], pattern_matches: [], linguistic_markers: [] },
     };
-  } catch (e: any) {
-    return { ok: false, provider: 'huggingface', error: String(e?.message || e) };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, provider: 'huggingface', error: message };
   }
 }
 
@@ -93,14 +98,18 @@ function clamp0to100(n: number) {
   return Math.max(0, Math.min(100, n));
 }
 
-function normalizeDetails(details: any | undefined) {
+function normalizeDetails(details: unknown | undefined) {
   if (!details || typeof details !== 'object') {
     return { sentence_scores: [], pattern_matches: [], linguistic_markers: [] };
   }
+  const value = details as {
+    sentence_scores?: Array<{ index: number; score: number }>;
+    pattern_matches?: string[];
+    linguistic_markers?: string[];
+  };
   return {
-    sentence_scores: Array.isArray(details.sentence_scores) ? details.sentence_scores : [],
-    pattern_matches: Array.isArray(details.pattern_matches) ? details.pattern_matches : [],
-    linguistic_markers: Array.isArray(details.linguistic_markers) ? details.linguistic_markers : [],
+    sentence_scores: Array.isArray(value.sentence_scores) ? value.sentence_scores : [],
+    pattern_matches: Array.isArray(value.pattern_matches) ? value.pattern_matches : [],
+    linguistic_markers: Array.isArray(value.linguistic_markers) ? value.linguistic_markers : [],
   };
 }
-

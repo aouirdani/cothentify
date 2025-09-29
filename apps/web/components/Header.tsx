@@ -8,7 +8,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 
 export function Header() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [plan, setPlan] = useState<string | null>(null);
@@ -20,7 +20,9 @@ export function Header() {
       try {
         const res = await fetch('/api/proxy/api/v1/me', { signal: ac.signal, cache: 'no-store' });
         if (res.ok) { const j = await res.json(); setPlan(j?.plan ?? null); }
-      } catch {}
+      } catch (error) {
+        console.error('[header] failed to load plan', error);
+      }
     })();
     return () => ac.abort();
   }, [status]);
@@ -30,7 +32,7 @@ export function Header() {
     { href: '/content', label: 'Content' },
     { href: '/seo', label: 'SEO' },
     { href: '/pricing', label: 'Pricing' },
-  ];
+  ] as const;
   const isActive = (h: string) => pathname === h || (h !== '/' && pathname?.startsWith(h));
 
   return (

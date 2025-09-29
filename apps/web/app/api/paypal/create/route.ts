@@ -3,13 +3,13 @@ import { PaypalCreateBodySchema } from '../../../../lib/schemas';
 import { getPriceUSD } from '../../../../lib/payments';
 
 function paypalBase() {
-  const env = (process.env.PAYPAL_ENV || 'sandbox').toLowerCase();
+  const env = (process.env['PAYPAL_ENV'] || 'sandbox').toLowerCase();
   return env === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 }
 
 async function getAccessToken() {
-  const client = process.env.PAYPAL_CLIENT_ID || '';
-  const secret = process.env.PAYPAL_CLIENT_SECRET || '';
+  const client = process.env['PAYPAL_CLIENT_ID'] || '';
+  const secret = process.env['PAYPAL_CLIENT_SECRET'] || '';
   if (!client || !secret) throw new Error('PayPal credentials missing');
   const res = await fetch(`${paypalBase()}/v1/oauth2/token`, {
     method: 'POST',
@@ -30,13 +30,13 @@ export async function POST(req: NextRequest) {
     const parsed = PaypalCreateBodySchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'invalid body', details: parsed.error.flatten() }, { status: 400 });
     const { plan, billing } = parsed.data;
-    const origin = process.env.NEXTAUTH_URL || new URL(req.url).origin;
+    const origin = process.env['NEXTAUTH_URL'] || new URL(req.url).origin;
     const accessToken = await getAccessToken();
     const returnUrl = new URL('/checkout/paypal/return', origin);
     returnUrl.searchParams.set('plan', plan);
     returnUrl.searchParams.set('billing', billing);
     const cancelUrl = new URL('/checkout/cancel', origin);
-    const price = getPriceUSD(plan as any, billing as any);
+    const price = getPriceUSD(plan, billing);
 
     const orderRes = await fetch(`${paypalBase()}/v2/checkout/orders`, {
       method: 'POST',
@@ -64,9 +64,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'PayPal order create failed', details: text }, { status: 500 });
     }
     const order = await orderRes.json();
-    const approveLink = (order.links || []).find((l: any) => l.rel === 'approve')?.href;
+    const approveLink = Array.isArray(order.links)
+      ? order.links.find((link: { rel?: string }) => link.rel === 'approve')?.href
+      : undefined;
     return NextResponse.json({ id: order.id, approveUrl: approveLink });
-  } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

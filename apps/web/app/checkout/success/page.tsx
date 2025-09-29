@@ -37,7 +37,9 @@ function SuccessInner() {
           setActivated(true);
           toast.success('Subscription activated');
         }
-      } catch {}
+      } catch (error) {
+        console.error('[checkout.success] activate failed', error);
+      }
     }
     activate();
   }, [plan, status, activated]);

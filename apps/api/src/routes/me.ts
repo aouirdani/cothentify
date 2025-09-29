@@ -4,9 +4,9 @@ import { prisma } from '../db';
 export async function meRoutes(app: FastifyInstance) {
   app.get('/', {
     schema: { summary: 'Get current user', security: [{ bearerAuth: [] }] },
-    preHandler: app.authenticate as any,
+    preHandler: app.authenticate,
     handler: async (req) => {
-      const email = (req.user as any)?.email as string | undefined;
+      const email = req.user?.email;
       if (!email) return { ok: false };
       const user = await prisma.user.upsert({
         where: { email },

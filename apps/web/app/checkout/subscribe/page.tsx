@@ -1,13 +1,16 @@
 "use client";
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useMemo, useState } from 'react';
 import { Card, CardHeader } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import toast from 'react-hot-toast';
 import NextDynamic from 'next/dynamic';
+import { getPriceUSD, type PlanKey, type Billing } from '../../../lib/payments';
 export const dynamic = 'force-dynamic';
+
+const StripeInline = NextDynamic(() => import('../../../components/checkout/StripeInline'), { ssr: false });
 
 export default function SubscribePage() {
   return (
@@ -19,24 +22,17 @@ export default function SubscribePage() {
 
 function SubscribeInner() {
   const sp = useSearchParams();
-  const router = useRouter();
-  const plan = sp.get('plan') || 'essential';
-  const billing = sp.get('billing') || 'monthly';
-  const { amount, currency } = (() => {
-    try {
-      const { getPriceUSD } = require('../../../lib/payments');
-      return getPriceUSD(plan, billing);
-    } catch {
-      return { amount: 0, currency: 'USD' };
-    }
-  })();
+  const planParam = (sp.get('plan') || 'essential').toLowerCase();
+  const billingParam = (sp.get('billing') || 'monthly').toLowerCase();
+  const validPlans: PlanKey[] = ['essential', 'premium', 'professional'];
+  const validBilling: Billing[] = ['monthly', 'yearly'];
+  const plan = validPlans.includes(planParam as PlanKey) ? (planParam as PlanKey) : 'essential';
+  const billing = validBilling.includes(billingParam as Billing) ? (billingParam as Billing) : 'monthly';
+  const { amount, currency } = useMemo(() => getPriceUSD(plan, billing), [plan, billing]);
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [agree, setAgree] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const StripeInline = NextDynamic(() => import('../../../components/checkout/StripeInline'), { ssr: false });
 
   function payWithPayPal() {
     if (!agree) { toast.error('Please accept terms'); return; }
@@ -59,7 +55,9 @@ function SubscribeInner() {
           window.location.href = href;
           win.close();
         }
-      } catch {}
+      } catch {
+        // Ignore cross-origin access until redirected back
+      }
     }, 500);
   }
 
@@ -90,7 +88,7 @@ function SubscribeInner() {
       <Card>
         <CardHeader title="Payment" subtitle={`Plan: ${plan.toUpperCase()} • Billing: ${billing.toUpperCase()} • Price: ${amount.toFixed(2)} ${currency}${billing === 'yearly' ? ' / yr' : ' / mo'}`} />
         <div className="grid gap-4">
-          <StripeInline plan={plan as any} billing={billing as any} payer={{ name, company, email }} agree={agree} />
+          <StripeInline plan={plan} billing={billing} payer={{ name, company, email }} agree={agree} />
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-500">or</span>
             <Button variant="secondary" onClick={payWithPayPal}>Pay with PayPal</Button>
