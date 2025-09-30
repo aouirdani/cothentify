@@ -2,8 +2,12 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
-const PYTHON_INTERPRETER = process.env['AI_DETECT_PYTHON'] || 'python3';
 const PYTHON_TIMEOUT_MS = Number(process.env['AI_DETECT_TIMEOUT_MS'] || 15000);
+const PYTHON_CANDIDATES = (() => {
+  const fromEnv = process.env['AI_DETECT_PYTHON'];
+  if (fromEnv) return [fromEnv];
+  return ['python3', 'python3.11', 'python'];
+})();
 
 const pythonBridgeScript = `
 import sys, json, time, re
@@ -153,49 +157,71 @@ type PythonAnalysis =
 
 function runPythonModel(sample: string, workingDir: string) {
     return new Promise<PythonAnalysis>((resolve, reject) => {
-        const subprocess = spawn(PYTHON_INTERPRETER, ['-c', pythonBridgeScript], {
-            cwd: workingDir,
-            stdio: ['pipe', 'pipe', 'pipe'],
-        });
+        const errors: Error[] = [];
 
-        const timer = setTimeout(() => {
-            subprocess.kill('SIGKILL');
-            reject(new Error('Python model timed out'));
-        }, PYTHON_TIMEOUT_MS);
-
-        let stdout = '';
-        let stderr = '';
-
-        subprocess.stdout.on('data', (chunk) => {
-            stdout += chunk.toString();
-        });
-
-        subprocess.stderr.on('data', (chunk) => {
-            stderr += chunk.toString();
-        });
-
-        subprocess.on('error', (error) => {
-            clearTimeout(timer);
-            reject(error);
-        });
-
-        subprocess.on('close', (code) => {
-            clearTimeout(timer);
-
-            if (code !== 0 && !stdout) {
-                reject(new Error(stderr.trim() || `Python process exited with code ${code}`));
+        function attempt(index: number) {
+            if (index >= PYTHON_CANDIDATES.length) {
+                const message =
+                    errors.length > 0 && errors[errors.length - 1]?.message.includes('ENOENT')
+                        ? 'No Python interpreter found. Install python3 or set AI_DETECT_PYTHON to a valid interpreter path.'
+                        : errors[errors.length - 1]?.message || 'Unable to start Python process.';
+                reject(new Error(message));
                 return;
             }
 
-            try {
-                const parsed = JSON.parse(stdout || '{}') as PythonAnalysis;
-                resolve(parsed);
-            } catch (error) {
-                reject(new Error(`Failed to parse Python response: ${(error as Error).message}. Output: ${stdout || stderr}`));
-            }
-        });
+            const interpreter = PYTHON_CANDIDATES[index];
+            const subprocess = spawn(interpreter, ['-c', pythonBridgeScript], {
+                cwd: workingDir,
+                stdio: ['pipe', 'pipe', 'pipe'],
+            });
 
-        subprocess.stdin.write(sample);
-        subprocess.stdin.end();
+            const timer = setTimeout(() => {
+                subprocess.kill('SIGKILL');
+                reject(new Error('Python model timed out'));
+            }, PYTHON_TIMEOUT_MS);
+
+            let stdout = '';
+            let stderr = '';
+
+            subprocess.stdout.on('data', (chunk) => {
+                stdout += chunk.toString();
+            });
+
+            subprocess.stderr.on('data', (chunk) => {
+                stderr += chunk.toString();
+            });
+
+            subprocess.on('error', (error) => {
+                clearTimeout(timer);
+                errors.push(error);
+                if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+                    attempt(index + 1);
+                    return;
+                }
+                reject(error);
+            });
+
+            subprocess.on('close', (code) => {
+                clearTimeout(timer);
+
+                if (code !== 0 && !stdout) {
+                    errors.push(new Error(stderr.trim() || `Python process exited with code ${code}`));
+                    attempt(index + 1);
+                    return;
+                }
+
+                try {
+                    const parsed = JSON.parse(stdout || '{}') as PythonAnalysis;
+                    resolve(parsed);
+                } catch (error) {
+                    reject(new Error(`Failed to parse Python response: ${(error as Error).message}. Output: ${stdout || stderr}`));
+                }
+            });
+
+            subprocess.stdin.write(sample);
+            subprocess.stdin.end();
+        }
+
+        attempt(0);
     });
 }
