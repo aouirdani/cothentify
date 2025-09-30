@@ -9,7 +9,6 @@ export default function Footer() {
         <div className="flex items-center gap-4">
           <a href="/" className="hover:underline">Home</a>
           <a href="/dashboard" className="hover:underline">Dashboard</a>
-          <a href="/content" className="hover:underline">Content</a>
           <a href="/ai-text-detection" className="hover:underline">AI Detection</a>
           <a href="/pricing" className="hover:underline">Pricing</a>
           <a href="/privacy" className="hover:underline">Privacy</a>

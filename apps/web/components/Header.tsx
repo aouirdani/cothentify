@@ -29,7 +29,6 @@ export function Header() {
 
   const nav = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/content', label: 'Content' },
     { href: '/seo', label: 'SEO' },
     { href: '/ai-text-detection', label: 'AI Detection' },
     { href: '/pricing', label: 'Pricing' },
