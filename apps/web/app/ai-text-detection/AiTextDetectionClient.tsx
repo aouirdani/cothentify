@@ -12,10 +12,14 @@ import { Spinner } from '../../components/ui/spinner';
 type AnalysisResponse = {
   ai_probability: number;
   confidence_score: number;
+  label?: 'ai' | 'human';
   detected_models?: string[];
   analysis_details?: {
     pattern_matches?: string[];
     linguistic_markers?: string[];
+    readability_score?: number;
+    lexical_diversity?: number;
+    avg_sentence_length?: number;
   };
   processing_time?: number;
 };
@@ -39,13 +43,15 @@ export default function AiTextDetectionClient() {
     setError(null);
     setAnalysis(null);
     try {
-      const res = await fetch('/api/proxy/api/v1/content/analyze', {
+      const res = await fetch('/api/ai-detection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: sample, options: { detailed_analysis: true, language: 'en' } }),
+        body: JSON.stringify({ content: sample }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as AnalysisResponse;
+      const json = (await res.json()) as AnalysisResponse & { error?: string };
+      if (!res.ok) {
+        throw new Error(json.error || `HTTP ${res.status}`);
+      }
       setAnalysis(json);
       setSubmitted(sample);
     } catch (err: unknown) {
@@ -136,6 +142,14 @@ export default function AiTextDetectionClient() {
                     const confidence = Number.isFinite(analysis.confidence_score) ? Number(analysis.confidence_score) : 0;
                     return (
                       <>
+                        {analysis.label && (
+                          <div>
+                            <p className="text-slate-400">Detected tone</p>
+                            <p className="text-lg font-semibold text-white">
+                              {analysis.label === 'ai' ? 'Likely AI-generated' : 'Likely human-written'}
+                            </p>
+                          </div>
+                        )}
                         <div>
                           <p className="text-slate-400">AI probability</p>
                           <p className="text-lg font-semibold text-white">{aiProbability.toFixed(1)}%</p>
