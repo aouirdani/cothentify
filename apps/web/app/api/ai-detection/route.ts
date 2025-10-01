@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { spawn } from 'child_process';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,8 +7,26 @@ const PYTHON_TIMEOUT_MS = Number(process.env['AI_DETECT_TIMEOUT_MS'] || 15000);
 const PYTHON_CANDIDATES = (() => {
   const fromEnv = process.env['AI_DETECT_PYTHON'];
   if (fromEnv) return [fromEnv];
-  return ['python3', 'python3.11', 'python'];
+  const repoRoot = path.resolve(process.cwd(), '..', '..');
+  const venvPaths = [
+    path.join(repoRoot, 'ai-vs-human', 'env', 'bin', 'python'),
+    path.join(repoRoot, 'ai-vs-human', 'env', 'Scripts', 'python.exe'),
+    path.join(repoRoot, 'ai-detection-small', 'env', 'bin', 'python'),
+    path.join(repoRoot, 'ai-detection-small', 'env', 'Scripts', 'python.exe'),
+  ];
+
+  const discovered = venvPaths.filter((candidatePath) => {
+    try {
+      return fs.statSync(candidatePath).isFile();
+    } catch (error) {
+      return false;
+    }
+  });
+
+  return [...discovered, 'python3', 'python3.11', 'python'];
 })();
+
+const repoRoot = path.resolve(process.cwd(), '..', '..');
 
 const pythonBridgeScript = `
 import sys, json, time, re
@@ -124,8 +143,6 @@ export async function POST(request: NextRequest) {
     if (!sample) {
         return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
-
-    const repoRoot = path.resolve(process.cwd(), '..', '..');
 
     try {
         const analysis = await runPythonModel(sample, repoRoot);
